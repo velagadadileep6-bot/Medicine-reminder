@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediCare Reminder – Intelligent Medicine Tracker & Alarm</title>
+  <!-- Google Fonts for premium outfit typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-dark font-size-normal">
+  <!-- Toast container for 5-minute warnings -->
+  <div id="pre-alert-toast-container" class="pre-alert-toast-container"></div>
+
+  <!-- SPLASH SCREEN INTRODUCTION -->
+  <div id="splash-screen" class="splash-container">
+    <div class="splash-content">
+      <div class="splash-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--teal-color); filter: drop-shadow(0 0 25px rgba(45, 212, 191, 0.55));">
+          <path d="M12 21a9 9 0 0 0 9-9v-5l-9-4l-9 4v5a9 9 0 0 0 9 9z" />
+          <path d="M9 12h6" />
+          <path d="M12 9v6" />
+        </svg>
+      </div>
+      <h1 class="splash-title">MediCare Reminder System</h1>
+      <p class="splash-subtitle">Your Health, Our Priority</p>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PATIENT AUTHENTICATION PORTAL (REGISTRATION & LOGIN)
+       ========================================== -->
+  <div id="auth-portal-container" class="auth-container hide">
+    <!-- Language & Database Selector for Auth Portal (Login / Register) -->
+    <div style="display: flex; justify-content: flex-end; padding: 0 0.5rem; margin-bottom: -0.5rem; gap: 0.4rem; align-items: center;">
+      <button type="button" id="auth-db-config-btn" class="form-select-sm btn-glass" style="padding: 0.3rem 0.6rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.25rem;">
+        <span>🗄️</span> <span data-i18n="dbConfigBtn">Database</span>
+      </button>
+      <span style="font-size: 1.1rem; margin-left: 0.5rem;">🌐</span>
+      <select id="auth-lang-switch-select" class="form-select-sm btn-glass" style="padding: 0.3rem 0.5rem; font-weight:600; cursor:pointer; max-width: 150px;">
+        <option value="en" selected>English</option>
+        <option value="hi">हिन्दी (Hindi)</option>
+        <option value="te">తెలుగు (Telugu)</option>
+      </select>
+    </div>
+    
+    <!-- LOGIN CARD -->
+    <div id="login-card" class="auth-card">
+      <div class="auth-role-tabs">
+        <button type="button" class="role-tab active" data-role="patient">Patient</button>
+        <button type="button" class="role-tab" data-role="caregiver">Caregiver</button>
+        <button type="button" class="role-tab" data-role="doctor">Doctor</button>
+        <button type="button" class="role-tab" data-role="admin">Admin</button>
+      </div>
+      <input type="hidden" id="login-role" value="patient">
+
+      <div class="auth-header">
+        <div class="logo-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21a9 9 0 0 0 9-9v-5l-9-4l-9 4v5a9 9 0 0 0 9 9z" />
+            <path d="M9 12h6" />
+            <path d="M12 9v6" />
+          </svg>
+        </div>
+        <h2 id="login-title-text" data-i18n="loginTitle">Patient Login</h2>
+        <p class="sub-label" id="login-sub-text" data-i18n="loginSub">Log in to track your medicine schedules</p>
+      </div>
+
+      <div id="login-test-helper" class="helper-text hide" style="background: rgba(217, 119, 6, 0.05); border: 1px dashed rgba(217, 119, 6, 0.2); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); text-align: center; font-size: 0.75rem; color: var(--amber-color); margin-bottom: 0.5rem;">
+        Test Account: <strong id="login-test-email">doctor@medicare.com</strong> / Password: <strong id="login-test-pass">doctor</strong>
+      </div>
+
+      <form id="login-form" class="auth-form">
+        <div class="form-group">
+          <label for="login-identifier" id="login-identifier-label" data-i18n="loginUserLabel">Email or Mobile Number</label>
+          <input type="text" id="login-identifier" class="form-control" placeholder="e.g. patient@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="login-password" data-i18n="password">Password</label>
+          <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-teal btn-lg" style="width: 100%; margin-top: 0.5rem;" data-i18n="loginBtn">Log In</button>
+      </form>
+      <div class="auth-footer" id="login-register-footer">
+        <span data-i18n="noAccount">Don't have an account?</span>
+        <button id="go-to-register-btn" class="btn-link" data-i18n="registerLink">Register Now</button>
+      </div>
+    </div>
+
+    <!-- REGISTRATION CARD -->
+    <div id="register-card" class="auth-card hide">
+      <div class="auth-header">
+        <div class="logo-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 21a9 9 0 0 0 9-9v-5l-9-4l-9 4v5a9 9 0 0 0 9 9z" />
+            <path d="M9 12h6" />
+            <path d="M12 9v6" />
+          </svg>
+        </div>
+        <h2 data-i18n="registerTitle">Patient Registration</h2>
+        <p class="sub-label" data-i18n="registerSub">Create an account to start health tracking</p>
+      </div>
+      <form id="register-form" class="auth-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-role" class="required">Register As</label>
+            <select id="reg-role" class="form-select">
+              <option value="patient" selected>Patient</option>
+              <option value="caregiver">Caregiver / Family Member</option>
+              <option value="doctor">Doctor / Medical Practitioner</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="reg-name" class="required" data-i18n="regName">Patient Full Name</label>
+            <input type="text" id="reg-name" class="form-control" placeholder="e.g. John Doe" required>
+          </div>
+          <div class="form-group flex-1">
+            <label for="reg-age" class="required" data-i18n="regAge">Age</label>
+            <input type="number" id="reg-age" class="form-control" placeholder="e.g. 65" min="1" max="120" required>
+          </div>
+        </div>
+
+        <div class="form-row patient-only-field">
+          <div class="form-group">
+            <label for="reg-gender" class="required" data-i18n="regGender">Gender</label>
+            <select id="reg-gender" class="form-select" required>
+              <option value="male" selected>Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="reg-blood" class="required" data-i18n="regBlood">Blood Group</label>
+            <select id="reg-blood" class="form-select" required>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-mobile" class="required" data-i18n="regMobile">Mobile Number</label>
+            <input type="tel" id="reg-mobile" class="form-control" placeholder="e.g. 9876543210" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-email" class="required" data-i18n="regEmail">Email Address</label>
+            <input type="email" id="reg-email" class="form-control" placeholder="e.g. patient@example.com" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="reg-address" class="required" data-i18n="regAddress">Home Address</label>
+            <input type="text" id="reg-address" class="form-control" placeholder="e.g. H.No 12-3, Srinagar Colony" required>
+          </div>
+          <div class="form-group flex-1">
+            <label for="reg-photo" data-i18n="regPhoto">Profile Photo (Optional)</label>
+            <input type="file" id="reg-photo" class="form-control" accept="image/*" style="padding: 0.25rem;">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group patient-only-field">
+            <label for="reg-emergency" class="required" data-i18n="regEmergency">Emergency Contact Number</label>
+            <input type="tel" id="reg-emergency" class="form-control" placeholder="e.g. 9876543211" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-password" class="required" data-i18n="regPassword">Password</label>
+            <input type="password" id="reg-password" class="form-control" placeholder="••••••••" minlength="4" required>
+          </div>
+        </div>
+
+        <div class="form-row caregiver-only-field hide" style="margin-top: 0.5rem;">
+          <div class="form-group">
+            <label for="reg-patient-link" class="required" data-i18n="labelPatientLink">Linked Patient Email / Mobile</label>
+            <input type="text" id="reg-patient-link" class="form-control" placeholder="e.g. patient@medicare.com">
+          </div>
+        </div>
+
+        <div class="inventory-section patient-only-field" style="margin-top: 0.5rem; background: rgba(45, 212, 191, 0.03); border-color: rgba(45, 212, 191, 0.15)">
+          <h3 style="color: var(--teal-color); border-bottom-color: rgba(45, 212, 191, 0.15)" data-i18n="regDocHeader">Primary Doctor Contact</h3>
+          <div class="form-row mt-1">
+            <div class="form-group">
+              <label for="reg-doc-name" class="required" data-i18n="regDocName">Doctor Name</label>
+              <input type="text" id="reg-doc-name" class="form-control" placeholder="e.g. Dr. Prasad" required>
+            </div>
+            <div class="form-group">
+              <label for="reg-doc-phone" class="required" data-i18n="regDocPhone">Doctor Contact Number</label>
+              <input type="tel" id="reg-doc-phone" class="form-control" placeholder="e.g. 9876543212" required>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-teal btn-lg" style="width: 100%; margin-top: 1rem;" data-i18n="registerBtn">Create Account & Log In</button>
+      </form>
+      <div class="auth-footer">
+        <span data-i18n="hasAccount">Already have an account?</span>
+        <button id="go-to-login-btn" class="btn-link" data-i18n="loginLink">Log In Here</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==========================================
+       MAIN APP CONTAINER (GLASSMORPHIC SHELL)
+       ========================================== -->
+  <div class="app-container hide" id="app-container">
+    
+    <!-- HEADER BAR: Quick Status, Time Machine Indicator & Accessibility Options -->
+    <header class="app-header">
+      <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <!-- Language Option (Top Left Side) -->
+        <div class="language-selector" style="display: flex; align-items: center; gap: 0.4rem;">
+          <span style="font-size: 1.1rem;">🌐</span>
+          <select id="lang-switch-select" class="form-select-sm btn-glass" style="padding: 0.3rem 0.5rem; font-weight:600; cursor:pointer;">
+            <option value="en" selected>English</option>
+            <option value="hi">हिन्दी (Hindi)</option>
+            <option value="te">తెలుగు (Telugu)</option>
+          </select>
+        </div>
+
+        <div class="brand">
+          <div class="logo-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 21a9 9 0 0 0 9-9v-5l-9-4l-9 4v5a9 9 0 0 0 9 9z" />
+              <path d="M9 12h6" />
+              <path d="M12 9v6" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <h1 data-i18n="title">MediCare Reminder</h1>
+            <span class="sub-label" data-i18n="subtitle">Guardian of Your Health</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Clock showing simulated/actual time -->
+      <div class="live-clock-container">
+        <span class="clock-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+        </span>
+        <span id="current-sim-time" class="sim-time-text">08:00:00 AM</span>
+        <span id="sim-time-badge" class="badge badge-normal hide">Simulated</span>
+      </div>
+
+      <!-- Emergency Helpline Buttons & Controls -->
+      <div class="header-actions header-actions-container">
+        <!-- Top Row: Accessibility, Theme, Profile, Logout -->
+        <div class="header-actions-row">
+          <!-- Accessibility Panel Toggle -->
+          <button id="accessibility-toggle-btn" class="icon-btn btn-glass" title="Accessibility Center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.05 4.575a1.553 1.553 0 0 1 2.23 0l3.72 3.72a1.553 1.553 0 0 1 0 2.23v0a1.553 1.553 0 0 1-2.23 0l-3.72-3.72a1.553 1.553 0 0 1 0-2.23v0Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25h1.5v3.75h-1.5v-3.75ZM12 9h.008v.008H12V9Z" />
+            </svg>
+          </button>
+
+
+          <!-- Theme Switcher -->
+          <button id="theme-toggle-btn" class="icon-btn btn-glass" title="Toggle Light/Dark Theme">
+            <svg id="theme-sun-icon" class="hide" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M3 12h2.25m-.386-6.364 1.591 1.591M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z" />
+            </svg>
+            <svg id="theme-moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+            </svg>
+          </button>
+
+          <!-- Logged-in Patient Info Badge -->
+          <div id="patient-profile-badge" class="patient-profile-badge" style="display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 0.3rem 0.6rem; border-radius: var(--border-radius-sm); cursor: pointer;">
+            <div id="header-profile-pic-container" style="width: 1.8rem; height: 1.8rem; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(45, 212, 191, 0.1); border: 1px solid var(--teal-color); flex-shrink: 0;">
+              <span id="header-profile-pic-fallback" style="font-size: 1rem;">👤</span>
+              <img id="header-profile-pic-img" src="" class="hide" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <div style="display: flex; flex-direction: column; line-height: 1.1; text-align: left;">
+              <span id="header-patient-name" style="font-weight: 700; font-size: 0.85rem;">John Doe</span>
+              <span id="header-patient-blood" style="font-size: 0.65rem; color: var(--rose-color); font-weight:600;">Blood: O+</span>
+            </div>
+          </div>
+
+          <!-- Logout button -->
+          <button id="logout-btn" class="icon-btn btn-glass font-danger" title="Log Out" style="width: 2.5rem; height: 2.5rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Bottom Row: Emergency Helpline & Call Doctor Buttons -->
+        <div class="emergency-actions-row">
+          <button id="emergency-call-btn" class="btn btn-sm btn-glass font-danger" style="border-color: var(--rose-color); font-weight:700;">
+            🚨 <span data-i18n="callEmergency">Emergency Helpline</span>
+          </button>
+          <button id="doctor-call-btn" class="btn btn-sm btn-glass text-teal" style="border-color: var(--teal-color); font-weight:700;">
+            📞 <span data-i18n="callDoctor">Call Doctor</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ACCESSIBILITY CENTER (SLIDE-DOWN PANEL) -->
+    <section id="accessibility-center" class="accessibility-panel hide">
+      <div class="panel-header">
+        <h3 data-i18n="accHelperTitle">Accessibility Helper</h3>
+        <span class="panel-subtitle" data-i18n="accHelperSub">Tailor the app for absolute readability and vocal support</span>
+      </div>
+      <div class="panel-grid">
+        <div class="setting-item">
+          <label data-i18n="textScalingLabel">Text Scaling (Optimal for Elderly Users)</label>
+          <div class="btn-group font-scaler">
+            <button id="font-scale-normal" class="btn btn-sm btn-glass active" data-i18n="normal">Normal</button>
+            <button id="font-scale-large" class="btn btn-sm btn-glass" data-i18n="large">Large</button>
+            <button id="font-scale-xlarge" class="btn btn-sm btn-glass" data-i18n="xlarge">Extra Large</button>
+          </div>
+        </div>
+
+        <div class="setting-item">
+          <label for="high-contrast-toggle" class="toggle-container">
+            <span class="setting-name" data-i18n="highContrastMode">High Contrast Mode</span>
+            <input type="checkbox" id="high-contrast-toggle" class="ios-switch">
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <label for="voice-alert-toggle" class="toggle-container">
+            <span class="setting-name" data-i18n="voiceReadOut">Voice Read-Out Alerts</span>
+            <span class="sub-label" data-i18n="voiceReadOutSub">Reads dosage instructions aloud when due</span>
+            <input type="checkbox" id="voice-alert-toggle" class="ios-switch" checked>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <label for="doctor-phone-input" data-i18n="doctorPhoneLabel">Doctor's Helpline Number</label>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+            <input type="tel" id="doctor-phone-input" class="form-control-sm" placeholder="e.g. 9876543210" style="flex: 1; padding: 0.4rem; border-radius: var(--border-radius-sm); border: 1px solid var(--glass-border); background: var(--bg-primary); color: var(--text-primary); font-size: 0.85rem;">
+            <button id="save-doctor-phone-btn" class="btn btn-xs btn-teal" style="font-weight: 700; padding: 0.4rem 0.8rem;" data-i18n="save">Save</button>
+          </div>
+        </div>
+
+        <!-- Interactive Sound Alert Guide (Helpful for Educated & Uneducated Users to learn sounds) -->
+        <div class="setting-item" style="grid-column: 1 / -1; margin-top: 0.5rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+          <label style="margin-bottom: 0.25rem;" data-i18n="soundTestTitle">Alert Sounds Guide (Hear and Learn)</label>
+          <span class="sub-label" style="margin-bottom: 0.5rem;" data-i18n="soundTestSub">Click to listen and understand each alarm type:</span>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button id="test-chime-btn" class="btn btn-sm btn-glass" style="border-color: var(--teal-color); font-weight:600;">
+              🔔 <span data-i18n="soundTestChimeBtn">Test Medicine Time Chime (Take Medicine)</span>
+            </button>
+            <button id="test-siren-btn" class="btn btn-sm btn-glass" style="border-color: var(--rose-color); font-weight:600;">
+              🚨 <span data-i18n="soundTestSirenBtn">Test Emergency Siren (Go to Hospital)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="app-navigation">
+      <button class="nav-tab active" data-tab="tab-appointments">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-9-11.25v11.25m-6.75-6.75h13.5" />
+        </svg>
+        <span data-i18n="checkups">Appointments</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-dashboard">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008ZM0 2.25h.008v.008H16.5V15Z" />
+        </svg>
+        <span data-i18n="todayTrack">Today's Track</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-cabinet">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+        </svg>
+        <span data-i18n="cabinetStock">Cabinet & Stock</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-analytics">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v5.25c0 .621-.504 1.125-1.125 1.125h-2.25A1.125 1.125 0 0 1 3 18.375v-5.25ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125v-9.75ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v14.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+        </svg>
+        <span data-i18n="adherenceStats">Adherence Stats</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-health">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+        </svg>
+        <span data-i18n="healthTrackerNav">Health Tracker</span>
+      </button>
+      <button class="nav-tab hide" data-tab="tab-caregiver-dashboard" id="nav-caregiver-tab">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+        </svg>
+        <span data-i18n="caregiverDashboardNav">Caregiver Info</span>
+      </button>
+      <button class="nav-tab hide" data-tab="tab-doctor-dashboard" id="nav-doctor-tab">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0 1 10.089 18M15 19.128a9.307 9.307 0 0 1-3.125-.563M10.089 18A11.36 11.36 0 0 1 5 19.128V18a9.337 9.337 0 0 1 4.121-7.684 4.125 4.125 0 0 1 7.533 2.493M10.089 18V18a11.386 11.386 0 0 1-4.122-1.128M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM21.75 8.25a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0ZM5.25 8.25a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+        </svg>
+        <span>Patient Registry</span>
+      </button>
+      <button class="nav-tab hide" data-tab="tab-admin-dashboard" id="nav-admin-tab">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+        </svg>
+        <span>Admin Portal</span>
+      </button>
+    </nav>
+
+    <!-- CONTENT DISPLAY SHEETS -->
+    <main class="app-main-content">
+      
+      <!-- ==========================================
+           TAB 1: TODAY'S TRACK & SCHEDULE (DASHBOARD)
+           ========================================== -->
+      <section id="tab-dashboard" class="tab-panel">
+        <!-- Dashboard Adherence Card Grid -->
+        <div class="dashboard-grid">
+          <!-- circular progress card -->
+          <div class="dashboard-card status-card">
+            <div class="progress-ring-container">
+              <svg class="progress-ring" width="120" height="120">
+                <circle class="progress-ring-circle-bg" stroke="rgba(255,255,255,0.06)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60" />
+                <circle id="adherence-circle" class="progress-ring-circle" stroke="#2dd4bf" stroke-width="8" stroke-dasharray="314.16" stroke-dashoffset="314.16" stroke-linecap="round" fill="transparent" r="50" cx="60" cy="60" />
+              </svg>
+              <div class="progress-text-overlay">
+                <span id="adherence-pct" class="pct">0%</span>
+                <span class="label">Taken Today</span>
+              </div>
+            </div>
+            <div class="status-summary">
+              <h3>Today's Ratio</h3>
+              <p id="adherence-fraction">0 of 0 doses</p>
+              <div id="streak-indicator" class="streak-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                </svg>
+                <span>Streak: <strong id="streak-days">0</strong> Days</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- quick upcoming/next dose card -->
+          <div class="dashboard-card next-dose-card">
+            <div class="card-glow"></div>
+            <span class="card-tag">UPCOMING SYSTEM</span>
+            <h3>Next Scheduled Dose</h3>
+            <div id="next-dose-display">
+              <div class="next-dose-time" id="next-dose-time">--:--</div>
+              <div class="next-dose-med" id="next-dose-name">No doses remaining today</div>
+              <div class="next-dose-sub" id="next-dose-desc">All caught up!</div>
+            </div>
+            <!-- Count down display -->
+            <div id="countdown-container" class="countdown-badge hide">
+              <span class="countdown-pulse"></span>
+              <span>Dose in <strong id="countdown-timer">00m 00s</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Daily Checklist Header -->
+        <div class="section-title-bar">
+          <div>
+            <h2>Daily Dose Checklist</h2>
+            <p class="section-desc">Mark your medications as they are consumed</p>
+          </div>
+          <div class="filters">
+            <!-- Filter checkboxes by schedule periods -->
+            <select id="time-of-day-filter" class="form-select-sm btn-glass">
+              <option value="all">All Times</option>
+              <option value="morning">Morning (06:00 - 11:59)</option>
+              <option value="afternoon">Afternoon (12:00 - 16:59)</option>
+              <option value="evening">Evening (17:00 - 20:59)</option>
+              <option value="night">Night (21:00 - 05:59)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- The List of Scheduled Doses for Today -->
+        <div id="daily-checklist-container" class="checklist-stack">
+          <!-- Dynamic checklist cards will render here -->
+          <div class="empty-state">
+            <div class="empty-icon">💊</div>
+            <p>Your medicine cabinet is empty! Add your first medicine to generate your daily schedule.</p>
+            <button class="btn btn-primary trigger-cabinet-modal-btn">Add Medicine Now</button>
+          </div>
+        </div>
+
+        <!-- As Needed / PRN Acidity & Pain Quick Log Section -->
+        <div class="section-title-bar mt-2">
+          <div>
+            <h2>As-Needed (PRN) / Symptom Relievers</h2>
+            <p class="section-desc">Log symptom-dependent medicines (like fever or pain tablets) based on temperature</p>
+          </div>
+        </div>
+        <div id="prn-checklist-container" class="checklist-stack">
+          <!-- Dynamic PRN quick loggers will render here -->
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 2: CABINET & STOCK MANAGEMENT
+           ========================================== -->
+      <section id="tab-cabinet" class="tab-panel">
+        <div class="section-title-bar">
+          <div>
+            <h2>Medicine Cabinet</h2>
+            <p class="section-desc">Manage your full inventory, schedules, and stock refills</p>
+          </div>
+          <button id="add-medicine-btn" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="16" height="16">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>Add Medicine</span>
+          </button>
+        </div>
+
+        <!-- Search and filters -->
+        <div class="cabinet-filter-bar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.637 10.636Z" />
+              </svg>
+            </span>
+            <input type="text" id="cabinet-search" class="form-control" placeholder="Search medicines by name or keyword...">
+          </div>
+          <div class="filter-controls">
+            <select id="cabinet-form-filter" class="form-select btn-glass">
+              <option value="all">All Forms</option>
+              <option value="tablet">Tablets</option>
+              <option value="capsule">Capsules</option>
+              <option value="syrup">Syrup/Liquid</option>
+              <option value="injection">Injections</option>
+              <option value="drops">Drops</option>
+              <option value="inhaler">Inhaler</option>
+              <option value="topical">Topical / Cream</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Medicine Cards Grid -->
+        <div id="cabinet-grid-container" class="cabinet-grid">
+          <!-- Dynamic cabinet cards will render here -->
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 3: ANALYTICS & COMPLIANCE HISTORY
+           ========================================== -->
+      <section id="tab-analytics" class="tab-panel">
+        <div class="section-title-bar">
+          <div>
+            <h2>Compliance Analytics</h2>
+            <p class="section-desc">View historical performance, trends, and records</p>
+          </div>
+          <button id="clear-history-btn" class="btn btn-glass btn-sm font-danger">Clear All History</button>
+        </div>
+
+        <!-- Analytic Stat Grid -->
+        <div class="analytics-metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Overall Adherence</span>
+            <div id="analytics-overall-pct" class="metric-value">0%</div>
+            <div class="metric-subtext">Total taken ratio over life</div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Total Doses Meted</span>
+            <div id="analytics-total-doses" class="metric-value">0</div>
+            <div class="metric-subtext">Total generated doses</div>
+          </div>
+          <div class="metric-card card-taken">
+            <span class="metric-label">Doses Taken</span>
+            <div id="analytics-taken-doses" class="metric-value text-teal">0</div>
+            <div class="metric-subtext text-teal">Doses marked taken</div>
+          </div>
+          <div class="metric-card card-skipped">
+            <span class="metric-label">Doses Skipped</span>
+            <div id="analytics-skipped-doses" class="metric-value text-orange">0</div>
+            <div class="metric-subtext text-orange">Missed or skipped</div>
+          </div>
+        </div>
+
+        <!-- Adherence Chart Visualization (CSS Flex Columns Graph) -->
+        <div class="chart-container-card">
+          <h3>Last 7 Days Compliance Trend</h3>
+          <div class="bar-chart-wrapper" id="analytics-bar-chart">
+            <!-- Dynamic CSS bars will render here -->
+          </div>
+        </div>
+
+        <!-- Compliance Log History Table -->
+        <div class="history-table-card">
+          <h3>Chronological Action Log</h3>
+          <div class="table-scroll-wrapper">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Medication</th>
+                  <th>Scheduled Slot</th>
+                  <th>Dose Info</th>
+                  <th>Status Action</th>
+                </tr>
+              </thead>
+              <tbody id="history-log-tbody">
+                <tr>
+                  <td colspan="5" class="text-center font-muted">No historical events recorded yet. Perform actions in dashboard to track logs.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 4: DOCTOR APPOINTMENTS & CHECK-UPS
+           ========================================== -->
+      <section id="tab-appointments" class="tab-panel active">
+        <div class="section-title-bar">
+          <div>
+            <h2 data-i18n="appointmentSchedulerTitle">Doctor Check-ups</h2>
+            <p class="section-desc" data-i18n="appointmentSchedulerDesc">Schedule and manage your doctor consultations and follow-ups</p>
+          </div>
+          <button id="add-appointment-btn" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="16" height="16">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span data-i18n="addAppointment">Book Appointment</span>
+          </button>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Upcoming Appointments List -->
+          <div class="dashboard-card" style="flex-direction: column; align-items: stretch; gap: 1rem; grid-column: 1 / -1;">
+            <h3 data-i18n="upcomingAppointments">Upcoming Check-ups</h3>
+            <div id="upcoming-appointments-container" class="checklist-stack">
+              <!-- Dynamic appointments will load here -->
+              <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                <p data-i18n="noAppointments">No check-ups scheduled. Stay healthy by booking regular follow-ups!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appointment History List -->
+        <div class="history-table-card">
+          <h3 data-i18n="appointmentHistory">Consultation History</h3>
+          <div class="table-scroll-wrapper">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th data-i18n="appointmentDate">Date & Time</th>
+                  <th data-i18n="appointmentDoc">Doctor Name</th>
+                  <th data-i18n="appointmentPurpose">Purpose / Notes</th>
+                  <th data-i18n="appointmentStatus">Status</th>
+                </tr>
+              </thead>
+              <tbody id="appointments-history-tbody">
+                <tr>
+                  <td colspan="4" class="text-center font-muted" data-i18n="noPastAppointments">No past appointments recorded.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 4A: HEALTH MONITORING & TRACKER
+           ========================================== -->
+      <section id="tab-health" class="tab-panel">
+        <div class="section-title-bar">
+          <div>
+            <h2 data-i18n="healthTrackerTitle">Health Tracker</h2>
+            <p class="section-desc" data-i18n="healthTrackerDesc">Log and monitor your daily vital signs (Blood Pressure, Blood Sugar, Pulse, and Weight)</p>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Log New Reading Form -->
+          <div class="dashboard-card" style="flex-direction: column; align-items: stretch; gap: 1rem; grid-column: 1 / -1;">
+            <h3 data-i18n="logReadingHeader">Log New Vital Signs</h3>
+            <form id="health-log-form" class="modal-form" style="padding: 0; gap: 1rem;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="health-sys" data-i18n="labelSystolic">Systolic BP (mmHg)</label>
+                  <input type="number" id="health-sys" class="form-control" placeholder="e.g. 120" min="60" max="250">
+                </div>
+                <div class="form-group">
+                  <label for="health-dia" data-i18n="labelDiastolic">Diastolic BP (mmHg)</label>
+                  <input type="number" id="health-dia" class="form-control" placeholder="e.g. 80" min="40" max="150">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="health-sugar" data-i18n="labelBloodSugar">Blood Sugar (mg/dL)</label>
+                  <input type="number" id="health-sugar" class="form-control" placeholder="e.g. 100" min="30" max="600">
+                </div>
+                <div class="form-group">
+                  <label for="health-sugar-type" data-i18n="labelSugarType">Sugar Context</label>
+                  <select id="health-sugar-type" class="form-select">
+                    <option value="fasting" selected data-i18n="optFasting">Fasting</option>
+                    <option value="post-prandial" data-i18n="optPostPrandial">Post-Prandial (After Food)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="health-pulse" data-i18n="labelPulse">Pulse Rate (BPM)</label>
+                  <input type="number" id="health-pulse" class="form-control" placeholder="e.g. 72" min="30" max="200">
+                </div>
+                <div class="form-group">
+                  <label for="health-weight" data-i18n="labelWeight">Weight (kg)</label>
+                  <input type="number" id="health-weight" class="form-control" placeholder="e.g. 70" step="0.1" min="10" max="300">
+                </div>
+              </div>
+              <div style="display: flex; justify-content: flex-end; margin-top: 0.5rem;">
+                <button type="submit" class="btn btn-teal" style="min-width: 150px;" data-i18n="saveReading">Save Vitals</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Latest readings cards grid -->
+          <div class="health-tracker-grid" style="grid-column: 1 / -1;">
+            <!-- BP -->
+            <div class="health-reading-card bp">
+              <div class="health-card-header">
+                <span class="health-card-title" data-i18n="titleBP">Blood Pressure</span>
+                <span class="health-card-icon">🩺</span>
+              </div>
+              <div id="latest-bp-val" class="health-card-value">--<span style="font-size:1.1rem; font-weight:500;">/--</span> <small>mmHg</small></div>
+              <div id="latest-bp-status" class="health-card-status status-loading" data-i18n="noData">No Data</div>
+              <div id="latest-bp-time" class="health-card-time">--</div>
+            </div>
+            
+            <!-- Sugar -->
+            <div class="health-reading-card sugar">
+              <div class="health-card-header">
+                <span class="health-card-title" data-i18n="titleSugar">Blood Sugar</span>
+                <span class="health-card-icon">🩸</span>
+              </div>
+              <div id="latest-sugar-val" class="health-card-value">-- <small>mg/dL</small></div>
+              <div id="latest-sugar-status" class="health-card-status status-loading" data-i18n="noData">No Data</div>
+              <div id="latest-sugar-time" class="health-card-time">--</div>
+            </div>
+
+            <!-- Pulse -->
+            <div class="health-reading-card pulse">
+              <div class="health-card-header">
+                <span class="health-card-title" data-i18n="titlePulse">Pulse Rate</span>
+                <span class="health-card-icon">❤️</span>
+              </div>
+              <div id="latest-pulse-val" class="health-card-value">-- <small>BPM</small></div>
+              <div id="latest-pulse-status" class="health-card-status status-loading" data-i18n="noData">No Data</div>
+              <div id="latest-pulse-time" class="health-card-time">--</div>
+            </div>
+
+            <!-- Weight -->
+            <div class="health-reading-card weight">
+              <div class="health-card-header">
+                <span class="health-card-title" data-i18n="titleWeight">Body Weight</span>
+                <span class="health-card-icon">⚖️</span>
+              </div>
+              <div id="latest-weight-val" class="health-card-value">-- <small>kg</small></div>
+              <div id="latest-weight-status" class="health-card-status status-loading" data-i18n="noData">No Data</div>
+              <div id="latest-weight-time" class="health-card-time">--</div>
+            </div>
+          </div>
+
+          <!-- History Logs table -->
+          <div class="dashboard-card" style="flex-direction: column; align-items: stretch; gap: 1rem; grid-column: 1 / -1;">
+            <h3 data-i18n="vitalsHistory">Vitals Log History</h3>
+            <div class="history-table-wrapper">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th data-i18n="thDate">Date & Time</th>
+                    <th data-i18n="thBP">Blood Pressure</th>
+                    <th data-i18n="thSugar">Blood Sugar</th>
+                    <th data-i18n="thPulse">Pulse Rate</th>
+                    <th data-i18n="thWeight">Weight</th>
+                  </tr>
+                </thead>
+                <tbody id="vitals-history-tbody">
+                  <tr>
+                    <td colspan="5" class="text-center font-muted" data-i18n="noVitalsLogged">No vitals registered yet. Submit the form above to record readings.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 4B: CAREGIVER LIVE MONITORING DASHBOARD
+           ========================================== -->
+      <section id="tab-caregiver-dashboard" class="tab-panel">
+        <!-- Caregiver Patient Header -->
+        <div id="cg-patient-card-header" class="caregiver-patient-summary hide">
+          <div class="cg-patient-avatar">
+            <span id="cg-patient-pic-placeholder">👤</span>
+            <img id="cg-patient-pic" src="" class="hide">
+          </div>
+          <div class="cg-patient-details-row">
+            <h2 id="cg-patient-name">Patient Name</h2>
+            <div class="cg-patient-metadata">
+              <span>Age: <strong id="cg-patient-age">--</strong></span>
+              <span>Blood Group: <strong id="cg-patient-blood">--</strong></span>
+              <span>Emergency: <strong id="cg-patient-emergency">--</strong></span>
+              <span>Doctor: <strong id="cg-patient-doctor">--</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <div id="cg-no-patient-view" class="dashboard-card cg-no-patient-state">
+          <span>📭</span>
+          <h3 data-i18n="noLinkedPatientTitle">No Linked Patient</h3>
+          <p style="max-width: 450px;" data-i18n="noLinkedPatientDesc">You haven't linked any patient profile. To start monitoring, please enter your patient's registered Email or Mobile Number during registration, or configure it in your account details.</p>
+        </div>
+
+        <div id="cg-patient-data-grid" class="caregiver-stats-container hide">
+          <!-- Compliance progress ring card -->
+          <div class="caregiver-card">
+            <h3 data-i18n="cgTitleAdherence">Patient Adherence</h3>
+            <div class="compliance-ring-wrapper">
+              <div class="progress-ring-container">
+                <svg width="100" height="100">
+                  <circle class="ring-bg" cx="50" cy="50" r="40" stroke-width="8"></circle>
+                  <circle id="cg-compliance-ring" class="ring-fg" cx="50" cy="50" r="40" stroke-width="8" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                </svg>
+                <div id="cg-compliance-text" class="progress-ring-text" style="font-size: 1.4rem;">0%</div>
+              </div>
+              <div class="compliance-info">
+                <span class="compliance-pct" id="cg-streak-count">0</span>
+                <span style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--text-muted);" data-i18n="cgStreak">Daily Streak</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Patient Medication Intake Checklist -->
+          <div class="caregiver-card">
+            <h3 data-i18n="cgTitleSchedule">Today's Intake Checklist</h3>
+            <div id="cg-patient-todo-list" class="caregiver-patient-todo">
+              <!-- items filled dynamically -->
+              <div class="font-muted text-center" style="padding: 1.5rem;" data-i18n="cgNoMedsToday">No medications scheduled for today.</div>
+            </div>
+          </div>
+
+          <!-- Patient Vitals Summary -->
+          <div class="caregiver-card" style="grid-column: 1 / -1;">
+            <h3 data-i18n="cgTitleVitals">Latest Patient Vitals</h3>
+            <div class="health-tracker-grid">
+              <div class="health-reading-card bp" style="padding: 1rem;">
+                <div class="health-card-header"><span class="health-card-title">BP</span><span style="font-size: 1rem;">🩺</span></div>
+                <div id="cg-bp-val" class="health-card-value" style="font-size: 1.5rem;">--/-- <small>mmHg</small></div>
+                <div id="cg-bp-status" class="health-card-status status-loading" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">--</div>
+              </div>
+              <div class="health-reading-card sugar" style="padding: 1rem;">
+                <div class="health-card-header"><span class="health-card-title">Sugar</span><span style="font-size: 1rem;">🩸</span></div>
+                <div id="cg-sugar-val" class="health-card-value" style="font-size: 1.5rem;">-- <small>mg/dL</small></div>
+                <div id="cg-sugar-status" class="health-card-status status-loading" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">--</div>
+              </div>
+              <div class="health-reading-card pulse" style="padding: 1rem;">
+                <div class="health-card-header"><span class="health-card-title">Pulse</span><span style="font-size: 1rem;">❤️</span></div>
+                <div id="cg-pulse-val" class="health-card-value" style="font-size: 1.5rem;">-- <small>BPM</small></div>
+                <div id="cg-pulse-status" class="health-card-status status-loading" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">--</div>
+              </div>
+              <div class="health-reading-card weight" style="padding: 1rem;">
+                <div class="health-card-header"><span class="health-card-title">Weight</span><span style="font-size: 1rem;">⚖️</span></div>
+                <div id="cg-weight-val" class="health-card-value" style="font-size: 1.5rem;">-- <small>kg</small></div>
+                <div id="cg-weight-status" class="health-card-status status-loading" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 5: PATIENT REGISTRY (DOCTOR PORTAL)
+           ========================================== -->
+      <section id="tab-doctor-dashboard" class="tab-panel">
+        <div class="section-title-bar">
+          <div>
+            <h2>Patient Registry</h2>
+            <p class="section-desc">View, manage, and schedule check-ups for patients under your care</p>
+          </div>
+        </div>
+
+        <div class="cabinet-filter-bar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="18" height="18">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.637 10.636Z" />
+              </svg>
+            </span>
+            <input type="text" id="doctor-patient-search" class="form-control" placeholder="Search patients by name or keyword...">
+          </div>
+        </div>
+
+        <!-- Patients grid -->
+        <div id="doctor-patients-grid" class="cabinet-grid">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Patient Detail view -->
+        <div id="doctor-patient-details-card" class="dashboard-card hide" style="flex-direction: column; align-items: stretch; grid-column: 1 / -1; margin-top: 1.5rem; gap: 1.25rem; padding: 1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.75rem;">
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <div id="doc-patient-pic-container" style="width: 2.5rem; height: 2.5rem; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(45, 212, 191, 0.1); border: 1px solid var(--teal-color);">
+                <span id="doc-patient-pic-fallback" style="font-size: 1.2rem;">👤</span>
+                <img id="doc-patient-pic-img" src="" class="hide" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <h3 id="doc-patient-detail-name" style="font-family: var(--font-family-title); font-weight:700; font-size:1.25rem;">Patient Details</h3>
+            </div>
+            <button id="doc-patient-close-btn" class="btn btn-sm btn-glass">Back to List</button>
+          </div>
+          
+          <div class="panel-grid">
+            <div class="inventory-section">
+              <h3 style="color:var(--teal-color); border-bottom-color:var(--glass-border);">Profile Info</h3>
+              <p style="margin-top:0.25rem;"><strong>Age:</strong> <span id="doc-patient-age">-</span></p>
+              <p><strong>Gender:</strong> <span id="doc-patient-gender">-</span></p>
+              <p><strong>Blood Group:</strong> <span id="doc-patient-blood">-</span></p>
+              <p><strong>Mobile:</strong> <span id="doc-patient-mobile">-</span></p>
+              <p><strong>Email:</strong> <span id="doc-patient-email">-</span></p>
+              <p><strong>Address:</strong> <span id="doc-patient-address">-</span></p>
+              <p><strong>Emergency Contact:</strong> <span id="doc-patient-emergency">-</span></p>
+            </div>
+            
+            <div class="inventory-section">
+              <h3 style="color:var(--teal-color); border-bottom-color:var(--glass-border);">Compliance Metrics</h3>
+              <p style="margin-top:0.25rem;"><strong>Streak:</strong> <span id="doc-patient-streak">-</span> Days</p>
+              <p><strong>Overall Adherence:</strong> <span id="doc-patient-adherence">-</span></p>
+            </div>
+          </div>
+
+          <div class="inventory-section">
+            <h3 style="color:var(--teal-color); border-bottom-color:var(--glass-border);">Medicine Cabinet</h3>
+            <div id="doc-patient-medicines-list" class="checklist-stack" style="margin-top: 0.5rem;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <div class="inventory-section">
+            <h3 style="color:var(--teal-color); border-bottom-color:var(--glass-border);">Schedule Doctor Check-up</h3>
+            <form id="doc-book-appointment-form" style="display:flex; flex-direction:column; gap:0.75rem; max-width: 450px; margin-top:0.5rem;">
+              <input type="hidden" id="doc-appt-patient-id">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="doc-appt-date" class="required">Appointment Date</label>
+                  <input type="date" id="doc-appt-date" class="form-control-sm" required>
+                </div>
+                <div class="form-group">
+                  <label for="doc-appt-time" class="required">Appointment Time</label>
+                  <input type="time" id="doc-appt-time" class="form-control-sm" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="doc-appt-purpose" class="required">Consultation Notes / Purpose</label>
+                <input type="text" id="doc-appt-purpose" class="form-control-sm" placeholder="e.g. Regular health checkup & blood test follow-up" required>
+              </div>
+              <button type="submit" class="btn btn-teal btn-sm" style="align-self:flex-start; font-weight:700; padding:0.5rem 1rem;">Schedule Appointment</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           TAB 6: ADMIN PORTAL
+           ========================================== -->
+      <section id="tab-admin-dashboard" class="tab-panel">
+        <div class="section-title-bar">
+          <div>
+            <h2>Admin Control Portal</h2>
+            <p class="section-desc">Manage all system users, database configurations, and audit registries</p>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="dashboard-card" style="flex-direction: column; align-items: stretch; gap: 1.25rem; grid-column: 1 / -1; padding: 1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem;">
+              <h3 style="font-family: var(--font-family-title); font-weight:700;">System Users</h3>
+            </div>
+            
+            <div class="table-scroll-wrapper">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-users-tbody">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+    </main>
+
+    <!-- ==========================================
+         DEVELOPER WIDGET: TIME MACHINE TEST PANEL
+         ========================================== -->
+    <aside class="time-machine-tray">
+      <div class="tray-toggle-header" id="time-machine-header">
+        <div class="tray-title">
+          <span class="pulse-red"></span>
+          <strong>Developer Testing Mode (Time Machine Clock)</strong>
+        </div>
+        <div class="tray-actions">
+          <button id="reset-sim-clock" class="btn btn-sm btn-glass btn-icon" title="Reset to Actual Real Time">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            <span>Real Time</span>
+          </button>
+        </div>
+      </div>
+      <div class="tray-body">
+        <p class="helper-text">
+          Medicines schedules trigger based on clock time. Slide the time below or fast-forward minutes to trigger alert modals instantly!
+        </p>
+        <div class="time-slider-wrapper">
+          <div class="control-row">
+            <label for="time-speed-select">Time Flow Speed:</label>
+            <select id="time-speed-select" class="form-select-sm">
+              <option value="1">1x (Real Time)</option>
+              <option value="5">5x Speed</option>
+              <option value="30">30x Speed</option>
+              <option value="60">60x (1 Real sec = 1 Sim min)</option>
+              <option value="600">600x (Fast Test)</option>
+            </select>
+          </div>
+          <div class="control-row">
+            <label for="sim-hour-select">Simulate Exact Hour:</label>
+            <div class="hour-presets">
+              <button class="btn btn-xs btn-glass time-preset-btn" data-time="07:59">07:59 AM (Test morning 8am)</button>
+              <button class="btn btn-xs btn-glass time-preset-btn" data-time="11:59">11:59 AM (Test noon 12pm)</button>
+              <button class="btn btn-xs btn-glass time-preset-btn" data-time="19:59">07:59 PM (Test evening 8pm)</button>
+            </div>
+          </div>
+          <div class="control-row inline-controls">
+            <label for="sim-manual-time">Set Precise Clock:</label>
+            <input type="time" id="sim-manual-time" class="form-control-sm">
+            <button id="apply-manual-time" class="btn btn-sm btn-teal">Apply</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </div> <!-- END APP SHELL -->
+
+  <!-- ==========================================
+       MODAL DIALOG 1: ADD & EDIT MEDICINE OVERLAY
+       ========================================== -->
+  <div id="medicine-form-modal" class="modal-overlay hide">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-form-title">Add New Medicine</h2>
+        <button id="modal-close-btn" class="icon-btn btn-glass">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="medicine-entry-form" class="modal-form">
+        <!-- Hidden input for edit mode tracking -->
+        <input type="hidden" id="edit-medicine-id" value="">
+
+        <!-- Quick Presets Dropdown for common elderly health conditions -->
+        <div class="form-group" style="margin-bottom: 0.5rem;">
+          <label for="med-template-preset">Quick-Add Common Medication Preset</label>
+          <span class="sub-label">Pre-fills standard clinical details for typical elder care treatments</span>
+          <select id="med-template-preset" class="form-select btn-glass">
+            <option value="">-- Select a preset template --</option>
+            <option value="dolo">Dolo 650 / Paracetamol (Fever & Pain / As-Needed PRN)</option>
+            <option value="pantoprazole">Pantoprazole (Acidity & Gas / Early Morning Gastro-protection)</option>
+            <option value="lisinopril">Lisinopril (Blood Pressure / Hypertension)</option>
+            <option value="atorvastatin">Atorvastatin (High Cholesterol / Lipid Control)</option>
+            <option value="metformin">Metformin (Type 2 Diabetes / Blood Sugar)</option>
+            <option value="naproxen">Naproxen (Arthritis / Joint Pain Relief)</option>
+            <option value="alendronate">Alendronate (Osteoporosis / Bone Density)</option>
+            <option value="aspirin">Low-Dose Aspirin (Heart Care / Cardiovascular Protection)</option>
+            <option value="multivitamin">Elderly Multivitamin & Vitamin D3 (Bone & Immunity Support)</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="med-name" class="required">Medicine Name</label>
+            <input type="text" id="med-name" class="form-control" placeholder="e.g. Paracetamol, Lisinopril..." required>
+          </div>
+          <div class="form-group flex-1">
+            <label for="med-type" class="required">Form / Type</label>
+            <select id="med-type" class="form-select" required>
+              <option value="tablet">💊 Tablet</option>
+              <option value="capsule">💊 Capsule</option>
+              <option value="syrup">🧴 Syrup</option>
+              <option value="injection">💉 Injection</option>
+              <option value="drops">💧 Drops</option>
+              <option value="inhaler">💨 Inhaler</option>
+              <option value="topical">🧴 Topical / Cream</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="med-dosage" class="required">Dosage Strength</label>
+            <input type="text" id="med-dosage" class="form-control" placeholder="e.g. 1 Tablet, 5ml, 2 Puffs" required>
+          </div>
+          <div class="form-group">
+            <label for="med-color">Card Color Accent</label>
+            <div class="color-picker-strip">
+              <input type="radio" id="col-blue" name="med-color" value="#3b82f6"><label for="col-blue" style="background:#3b82f6"></label>
+              <input type="radio" id="col-teal" name="med-color" value="#0d9488" checked><label for="col-teal" style="background:#0d9488"></label>
+              <input type="radio" id="col-purple" name="med-color" value="#8b5cf6"><label for="col-purple" style="background:#8b5cf6"></label>
+              <input type="radio" id="col-rose" name="med-color" value="#f43f5e"><label for="col-rose" style="background:#f43f5e"></label>
+              <input type="radio" id="col-amber" name="med-color" value="#d97706"><label for="col-amber" style="background:#d97706"></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time schedules selection -->
+        <div id="schedule-times-form-group" class="form-group">
+          <label class="required">Scheduled Reminders (Take Times)</label>
+          <span class="sub-label">Add multiple times in a single day for repeating doses</span>
+          <div id="schedule-times-container" class="time-selection-stack">
+            <!-- Initial time slot -->
+            <div class="time-picker-row">
+              <input type="time" class="form-control schedule-time-input" value="08:00" required>
+              <button type="button" class="btn btn-icon btn-glass btn-sm remove-time-btn" disabled>&times;</button>
+            </div>
+          </div>
+          <button type="button" id="add-schedule-time-row-btn" class="btn btn-xs btn-glass btn-teal mt-1">
+            + Add Another Time Slot
+          </button>
+        </div>
+
+        <!-- Frequency specifications -->
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="med-frequency" class="required">Frequency</label>
+            <select id="med-frequency" class="form-select" required>
+              <option value="daily">Every Day</option>
+              <option value="specific_days">Specific Days of Week</option>
+              <option value="prn">As Needed (PRN) / Temperature & Symptom Dependent</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- PRN specifications (hidden unless PRN selected) -->
+        <div id="prn-group" class="form-group hide">
+          <div class="inventory-section" style="background: rgba(244, 63, 94, 0.04); border-color: rgba(244, 63, 94, 0.15)">
+            <h3 style="color: var(--rose-color); border-bottom-color: rgba(244, 63, 94, 0.15)">Fever / Pain Limit Guards (PRN)</h3>
+            <div class="form-group">
+              <label for="med-prn-condition" class="required">Trigger Condition / Symptom</label>
+              <input type="text" id="med-prn-condition" class="form-control" placeholder="e.g. Body Temp > 99°F, Severe Headache...">
+            </div>
+            <div class="form-row mt-1">
+              <div class="form-group">
+                <label for="med-prn-gap">Min Gap Between Doses (Hours)</label>
+                <input type="number" id="med-prn-gap" class="form-control" placeholder="e.g. 4" min="1" value="4">
+              </div>
+              <div class="form-group">
+                <label for="med-prn-max">Max Doses Per 24h</label>
+                <input type="number" id="med-prn-max" class="form-control" placeholder="e.g. 4" min="1" value="4">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekdays checkboxes (hidden unless specific_days selected) -->
+        <div id="weekdays-group" class="form-group hide">
+          <label class="required">Select Active Days</label>
+          <div class="days-checkbox-grid">
+            <label class="day-check"><input type="checkbox" name="specific-days" value="1"><span>Mon</span></label>
+            <label class="day-check"><input type="checkbox" name="specific-days" value="2"><span>Tue</span></label>
+            <label class="day-check"><input type="checkbox" name="specific-days" value="3"><span>Wed</span></label>
+            <label class="day-check"><input type="checkbox" name="specific-days" value="4"><span>Thu</span></label>
+            <label class="day-check"><input type="checkbox" name="specific-days" value="5"><span>Fri</span></label>
+            <label class="day-check"><input type="checkbox" name="specific-days" value="6"><span>Sat</span></label>
+            <label class="day-check"><input type="checkbox" name="specific-days" value="0"><span>Sun</span></label>
+          </div>
+        </div>
+
+        <!-- Inventory and refills -->
+        <div class="inventory-section">
+          <h3>Stock Refill Guard (Optional)</h3>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="med-stock">Current Stock Qty</label>
+              <input type="number" id="med-stock" class="form-control" placeholder="e.g. 30" min="0">
+            </div>
+            <div class="form-group">
+              <label for="med-stock-low">Refill Threshold Alert</label>
+              <input type="number" id="med-stock-low" class="form-control" placeholder="e.g. 5" min="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="med-instructions">Additional Instructions</label>
+          <input type="text" id="med-instructions" class="form-control" placeholder="e.g. Take with food, Avoid grapefruit juice...">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="modal-cancel-btn" class="btn btn-glass">Cancel</button>
+          <button type="submit" class="btn btn-teal">Save Medication</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL DIALOG 2: LOUD ALARM DUENEWS MODAL
+       ========================================== -->
+  <div id="alarm-alert-modal" class="modal-overlay modal-alarm-overlay hide">
+    <!-- Heartbeat glow aura behind the card -->
+    <div class="alarm-pulsing-glow"></div>
+    
+    <div class="alarm-card">
+      <div class="alarm-icon-container animate-pulse">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="48" height="48">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a9.04 9.04 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5M12 5.25v13.5m-6.75-6.75h13.5" />
+        </svg>
+      </div>
+
+      <div class="alarm-content">
+        <span class="alarm-indicator">DOSE DUE RIGHT NOW</span>
+        <h2 id="alarm-med-name" class="med-due-title">Lisinopril</h2>
+        <div id="alarm-med-dosage" class="med-due-dosage">10 mg - 1 Tablet</div>
+        
+        <div id="alarm-med-instructions" class="alarm-instruction-box">
+          Take on an empty stomach with a full glass of water.
+        </div>
+
+        <div class="stock-refill-note hide" id="alarm-stock-alert">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+          </svg>
+          <span>Inventory Critical: Only <strong id="alarm-stock-remaining">0</strong> tablets left!</span>
+        </div>
+      </div>
+
+      <!-- High contrast primary action buttons -->
+      <div class="alarm-actions">
+        <button id="alarm-call-doctor-btn" class="btn btn-glass text-teal" style="font-weight:700">📞 <span data-i18n="callDoctor">Call Doctor</span></button>
+        <div style="display: flex; gap: 0.5rem; width: 100%;">
+          <button id="alarm-skip-btn" class="btn btn-glass font-danger" style="flex: 1;"><span data-i18n="skipDose">Skip Dose</span></button>
+          <button id="alarm-snooze-btn" class="btn btn-glass text-amber" style="flex: 1;"><span data-i18n="snooze">Snooze (10 mins)</span></button>
+        </div>
+        <button id="alarm-take-btn" class="btn btn-teal btn-lg animate-bounce"><span data-i18n="markTaken">Mark Taken</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL DIALOG 3: BOOK DOCTOR APPOINTMENT
+       ========================================== -->
+  <div id="appointment-form-modal" class="modal-overlay hide">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modal-appointment-title" data-i18n="bookAppointmentTitle">Schedule Doctor Check-up</h2>
+        <button id="appointment-modal-close-btn" class="icon-btn btn-glass">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="appointment-entry-form" class="modal-form">
+        <div class="form-group">
+          <label for="appt-doc-name" class="required" data-i18n="regDocName">Doctor Name</label>
+          <input type="text" id="appt-doc-name" class="form-control" placeholder="e.g. Dr. Prasad" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="appt-date" class="required" data-i18n="appointmentDateInput">Appointment Date</label>
+            <input type="date" id="appt-date" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="appt-time" class="required" data-i18n="appointmentTimeInput">Appointment Time</label>
+            <input type="time" id="appt-time" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="appt-purpose" data-i18n="appointmentPurposeInput">Purpose / Consultation Notes</label>
+          <input type="text" id="appt-purpose" class="form-control" placeholder="e.g. Routine sugar test follow-up, BP checkup...">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="appt-modal-cancel-btn" class="btn btn-glass" data-i18n="cancel">Cancel</button>
+          <button type="submit" class="btn btn-teal" data-i18n="saveAppointment">Schedule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL DIALOG 4: PATIENT PROFILE MODAL
+       ========================================== -->
+  <div id="patient-profile-modal" class="modal-overlay hide">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header" style="background: var(--bg-secondary);">
+        <h2 data-i18n="profileTitle">Patient Profile</h2>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button id="profile-edit-toggle-btn" class="btn btn-xs btn-glass" style="font-weight: 700; color: var(--teal-color);" data-i18n="edit">Edit</button>
+          <button id="profile-modal-close-btn" class="icon-btn btn-glass">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="modal-form" style="padding: 1.5rem; gap: 1rem;">
+        <!-- Avatar & Header info inside modal -->
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.3rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem;">
+          <div id="profile-modal-pic-container" style="position: relative; width: 6rem; height: 6rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(45, 212, 191, 0.1); border: 2.5px solid var(--teal-color); box-shadow: var(--shadow-sm);">
+              <span id="profile-modal-pic-fallback" style="font-size: 3.5rem;">👤</span>
+              <img id="profile-modal-pic-img" src="" class="hide" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            
+            <!-- Camera / Edit overlay badge at top-right of photo container -->
+            <button id="change-profile-pic-btn" class="icon-btn btn-teal animate-pulse" style="position: absolute; top: -0.2rem; right: -0.2rem; width: 1.8rem; height: 1.8rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; border: 1.5px solid var(--bg-secondary); cursor: pointer; box-shadow: var(--shadow-sm); z-index: 10;" title="Add from Gallery">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="12" height="12">
+                <path d="M13.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM15 7.5a.75.75 0 0 1 .75-.75h.75a.75.75 0 0 1 0 1.5h-.75A.75.75 0 0 1 15 7.5Z" />
+                <path fill-rule="evenodd" d="M3.75 3A1.75 1.75 0 0 0 2 4.75v10.5A1.75 1.75 0 0 0 3.75 17h12.5A1.75 1.75 0 0 0 18 15.25V4.75A1.75 1.75 0 0 0 16.25 3H3.75ZM4 6.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM14.25 13a4.25 4.25 0 1 1-8.5 0 4.25 4.25 0 0 1 8.5 0Z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            
+            <!-- Hidden input for file selection -->
+            <input type="file" id="change-profile-pic-input" class="hide" accept="image/*">
+          </div>
+          <!-- Clickable text link "Add from Gallery" -->
+          <button id="change-profile-pic-link" class="btn-link" style="font-size: 0.78rem; font-weight: 600; color: var(--teal-color); margin-top: 0.1rem; cursor: pointer; border: none; background: none; padding: 0;" data-i18n="addFromGallery">Add from Gallery</button>
+        </div>
+
+        <!-- 1. VIEW MODE LAYOUT -->
+        <div id="profile-view-layout" style="display: flex; flex-direction: column; gap: 0.8rem;">
+          <div style="text-align: center; margin-bottom: 0.5rem;">
+            <h3 id="profile-modal-patient-name" style="font-family: var(--font-family-title); font-size: 1.4rem; font-weight: 700; margin: 0; color: var(--text-primary);">John Doe</h3>
+            <span id="profile-modal-patient-blood-badge" class="badge" style="background: rgba(244, 63, 94, 0.15); color: var(--rose-color); border: 1px solid rgba(244, 63, 94, 0.3); font-weight: 700; margin-top: 0.3rem; display: inline-block;">Blood: O+</span>
+          </div>
+
+          <div style="display: flex; gap: 1rem;">
+            <div style="flex: 1; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 0.6rem; border-radius: var(--border-radius-md);">
+              <span class="sub-label" style="display:block; font-size:0.75rem;" data-i18n="profileAge">Age</span>
+              <strong id="profile-modal-patient-age" style="font-size:1.1rem; color: var(--text-primary);">65</strong>
+            </div>
+            <div style="flex: 1; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 0.6rem; border-radius: var(--border-radius-md);">
+              <span class="sub-label" style="display:block; font-size:0.75rem;" data-i18n="profileGender">Gender</span>
+              <strong id="profile-modal-patient-gender" style="font-size:1.1rem; color: var(--text-primary); text-transform: capitalize;">Male</strong>
+            </div>
+          </div>
+
+          <!-- Contact details -->
+          <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 0.8rem; border-radius: var(--border-radius-md); display:flex; flex-direction:column; gap:0.5rem;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.4rem;">
+              <span class="sub-label" style="font-size:0.8rem;" data-i18n="profileMobile">Mobile</span>
+              <span id="profile-modal-patient-mobile" style="font-weight:600; color: var(--text-primary);">9876543210</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.4rem;">
+              <span class="sub-label" style="font-size:0.8rem;" data-i18n="profileEmail">Email</span>
+              <span id="profile-modal-patient-email" style="font-weight:600; color: var(--text-primary);">patient@example.com</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap:0.2rem;">
+              <span class="sub-label" style="font-size:0.8rem;" data-i18n="profileAddress">Home Address</span>
+              <span id="profile-modal-patient-address" style="font-weight:500; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.3;">12-3 Srinagar Colony, Hyderabad</span>
+            </div>
+          </div>
+
+          <!-- Emergency and Doctor details -->
+          <div style="background: rgba(244, 63, 94, 0.03); border: 1px solid rgba(244, 63, 94, 0.1); padding: 0.8rem; border-radius: var(--border-radius-md); display:flex; flex-direction:column; gap:0.4rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size:0.8rem; color: var(--rose-color); font-weight: 600;" data-i18n="profileEmergency">Emergency Contact</span>
+              <strong id="profile-modal-patient-emergency" style="font-size:0.9rem; color: var(--text-primary);">9876543211</strong>
+            </div>
+          </div>
+
+          <div style="background: rgba(13, 148, 136, 0.03); border: 1px solid rgba(13, 148, 136, 0.1); padding: 0.8rem; border-radius: var(--border-radius-md); display:flex; flex-direction:column; gap:0.4rem;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(13, 148, 136, 0.05); padding-bottom: 0.4rem;">
+              <span class="sub-label" style="font-size:0.8rem;" data-i18n="profileDocName">Primary Doctor</span>
+              <span id="profile-modal-patient-doctor" style="font-weight:600; color: var(--teal-color);">Dr. Prasad</span>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span class="sub-label" style="font-size:0.8rem;" data-i18n="profileDocPhone">Doctor Contact</span>
+              <span id="profile-modal-patient-doctor-phone" style="font-weight:600; color: var(--text-primary);">9876543212</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. EDIT MODE LAYOUT -->
+        <div id="profile-edit-layout" class="hide" style="display: flex; flex-direction: column; gap: 0.8rem;">
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label for="edit-profile-name" class="required" data-i18n="regName">Patient Full Name</label>
+              <input type="text" id="edit-profile-name" class="form-control" placeholder="e.g. John Doe" required>
+            </div>
+            <div class="form-group flex-1">
+              <label for="edit-profile-age" class="required" data-i18n="regAge">Age</label>
+              <input type="number" id="edit-profile-age" class="form-control" placeholder="65" min="1" max="120" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="edit-profile-gender" class="required" data-i18n="regGender">Gender</label>
+              <select id="edit-profile-gender" class="form-select" required>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="edit-profile-blood" class="required" data-i18n="regBlood">Blood Group</label>
+              <select id="edit-profile-blood" class="form-select" required>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="edit-profile-mobile" class="required" data-i18n="regMobile">Mobile Number</label>
+              <input type="tel" id="edit-profile-mobile" class="form-control" placeholder="9876543210" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-profile-email" class="required" data-i18n="regEmail">Email Address</label>
+              <input type="email" id="edit-profile-email" class="form-control" placeholder="patient@example.com" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-profile-address" class="required" data-i18n="regAddress">Home Address</label>
+            <input type="text" id="edit-profile-address" class="form-control" placeholder="12-3 Srinagar Colony" required>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-profile-emergency" class="required" data-i18n="regEmergency">Emergency Contact Number</label>
+            <input type="tel" id="edit-profile-emergency" class="form-control" placeholder="9876543211" required>
+          </div>
+
+          <div class="inventory-section" style="margin-top: 0.2rem; background: rgba(45, 212, 191, 0.02); border-color: rgba(45, 212, 191, 0.1)">
+            <h3 style="color: var(--teal-color); border-bottom-color: rgba(45, 212, 191, 0.1)" data-i18n="regDocHeader">Primary Doctor Contact</h3>
+            <div class="form-row mt-1">
+              <div class="form-group">
+                <label for="edit-profile-doc-name" class="required" data-i18n="regDocName">Doctor Name</label>
+                <input type="text" id="edit-profile-doc-name" class="form-control" placeholder="Dr. Prasad" required>
+              </div>
+              <div class="form-group">
+                <label for="edit-profile-doc-phone" class="required" data-i18n="regDocPhone">Doctor Contact Number</label>
+                <input type="tel" id="edit-profile-doc-phone" class="form-control" placeholder="9876543212" required>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding-top:0.5rem; margin-top:0.5rem; border-top: 1px solid var(--glass-border); display:flex; justify-content:flex-end; gap:0.5rem;">
+          <!-- View mode actions -->
+          <button type="button" id="profile-modal-close-btn-2" class="btn btn-teal" style="min-width: 80px;" data-i18n="close">Close</button>
+          
+          <!-- Edit mode actions (hidden by default) -->
+          <button type="button" id="profile-edit-cancel-btn" class="btn btn-glass hide" style="min-width: 80px;" data-i18n="cancel">Cancel</button>
+          <button type="button" id="profile-edit-save-btn" class="btn btn-teal hide" style="min-width: 80px; font-weight:700;" data-i18n="save">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cloud Database Settings Modal -->
+  <div id="db-settings-modal" class="modal-overlay hide">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 data-i18n="dbConfigTitle">Cloud Database Settings</h2>
+        <button type="button" id="db-modal-close-x" style="background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer;">&times;</button>
+      </div>
+      <div class="modal-form">
+        <p style="font-size: 0.9rem; line-height: 1.5; color: var(--text-muted);" data-i18n="dbConfigDesc">
+          Connect your app to a Firebase Firestore cloud database for persistent logins and state syncing. If empty, the app will fallback to local SQLite storage.
+        </p>
+        <div class="form-group">
+          <label for="db-config-json" style="font-weight: 600;" data-i18n="dbConfigLabel">Firebase Configuration JSON</label>
+          <textarea id="db-config-json" class="form-control" rows="8" style="font-family: monospace; font-size: 0.8rem; padding: 0.5rem; resize: vertical;" placeholder='e.g. { "apiKey": "...", "projectId": "...", ... }'></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; gap: 0.5rem; justify-content: flex-end; border-top: 1px solid var(--glass-border);">
+        <button type="button" id="db-config-reset-btn" class="btn btn-glass" style="color: #f43f5e;" data-i18n="dbConfigReset">Reset to SQLite</button>
+        <button type="button" id="db-config-save-btn" class="btn btn-teal" data-i18n="dbConfigSave">Connect & Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Emergency SOS Modal -->
+  <div id="sos-alert-modal" class="modal-overlay modal-alarm-overlay hide">
+    <div class="modal-card" style="border-color: #f43f5e; box-shadow: 0 0 35px rgba(244, 63, 94, 0.4);">
+      <div class="modal-header" style="border-bottom-color: rgba(244, 63, 94, 0.2);">
+        <h2 style="color: #f43f5e; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🚨</span> <span data-i18n="emergencySosTitle">EMERGENCY SOS ALERT</span>
+        </h2>
+      </div>
+      <div class="modal-form" style="align-items: center; text-align: center; gap: 1.5rem;">
+        <div style="font-size: 3.5rem; animation: pulse 1s infinite;">🚨</div>
+        <div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 0.5rem;" data-i18n="sosActivated">SOS Alarm Activated!</h3>
+          <p id="sos-message-text" style="line-height: 1.6; color: var(--text-primary);">
+            An emergency alert has been triggered. Please contact your emergency contact and primary doctor immediately.
+          </p>
+        </div>
+        
+        <div id="sos-contacts-info" style="width:100%; text-align: left; background: rgba(244, 63, 94, 0.05); border: 1px dashed rgba(244, 63, 94, 0.2); padding: 1rem; border-radius: var(--border-radius-md); display:flex; flex-direction:column; gap:0.5rem; font-size:0.9rem;">
+          <div>📞 <span data-i18n="sosEmergencyContact">Emergency Contact:</span> <strong id="sos-emergency-val">--</strong></div>
+          <div>👨‍⚕️ <span data-i18n="sosDoctorContact">Primary Doctor:</span> <strong id="sos-doctor-name-val">--</strong> (<strong id="sos-doctor-phone-val">--</strong>)</div>
+          <div>🚑 <span data-i18n="sosHelpline">Emergency Helpline:</span> <strong>108 / 112</strong></div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top-color: rgba(244, 63, 94, 0.2); display: flex; justify-content: center; padding: 1rem 1.5rem;">
+        <button type="button" id="sos-close-btn" class="btn btn-teal" style="background: #e11d48; border-color:#e11d48; width: 100%; font-weight: 800; letter-spacing: 0.5px;" data-i18n="sosDeactivate">STOP ALARM & DEACTIVATE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating SOS Button -->
+  <button type="button" id="sos-btn" class="btn-sos hide">
+    <span>🚨</span>
+    <small>SOS</small>
+  </button>
+
+  <!-- Firebase App and Firestore SDKs (v8 Global SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <!-- Unified audio alarm system -->
+  <script src="app.js"></script>
+</body>
+</html>
