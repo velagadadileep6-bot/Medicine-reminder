@@ -863,6 +863,19 @@ class AegisState {
 // Global Firebase Firestore Database Reference
 let db = null;
 
+// ==========================================
+// FIREBASE CONFIGURATION
+// Replace the placeholder values with your actual Firebase project config.
+// ==========================================
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
 // Synchronous SHA-256 for browser environment using subtle crypto
 async function hashPassword(password, salt) {
   if (!salt) {
@@ -876,22 +889,35 @@ async function hashPassword(password, salt) {
   return { hash: hashHex, salt: salt };
 }
 
-// Initialize Firebase if config exists in localStorage
+// Initialize Firebase if config exists in code or localStorage
 function initFirebase() {
-  const configStr = localStorage.getItem('firebase_config');
-  if (configStr) {
-    try {
-      const config = JSON.parse(configStr);
-      if (config && config.projectId) {
-        if (!firebase.apps.length) {
-          firebase.initializeApp(config);
-        }
-        db = firebase.firestore();
-        console.log("Firebase Firestore initialized successfully!");
-        
-        // Seed default users in background if newly connected
-        seedFirebaseDatabase();
+  let config = null;
+  
+  // 1. Try to load from hardcoded config in code first
+  if (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG && FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.projectId !== 'YOUR_PROJECT_ID') {
+    config = FIREBASE_CONFIG;
+  } else {
+    // 2. Fall back to local storage config
+    const configStr = localStorage.getItem('firebase_config');
+    if (configStr) {
+      try {
+        config = JSON.parse(configStr);
+      } catch (e) {
+        console.error("Failed to parse local storage Firebase config:", e);
       }
+    }
+  }
+
+  if (config && config.projectId) {
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(config);
+      }
+      db = firebase.firestore();
+      console.log("Firebase Firestore initialized successfully!");
+      
+      // Seed default users in background if newly connected
+      seedFirebaseDatabase();
     } catch (e) {
       console.error("Failed to initialize Firebase:", e);
     }
