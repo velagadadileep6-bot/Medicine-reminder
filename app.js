@@ -2156,10 +2156,14 @@ class AegisAppController {
     if (path === '/api/auth/register') {
       const { name, email, mobile, password, role } = data;
       
-      let dupSnapshot = await db.collection('users').where('email', '==', email).get();
-      if (!dupSnapshot.empty) throw new Error("Email or mobile number already registered!");
-      dupSnapshot = await db.collection('users').where('mobile', '==', mobile).get();
-      if (!dupSnapshot.empty) throw new Error("Email or mobile number already registered!");
+      if (email) {
+        let dupSnapshot = await db.collection('users').where('email', '==', email).get();
+        if (!dupSnapshot.empty) throw new Error("Email or mobile number already registered!");
+      }
+      if (mobile) {
+        let dupSnapshot = await db.collection('users').where('mobile', '==', mobile).get();
+        if (!dupSnapshot.empty) throw new Error("Email or mobile number already registered!");
+      }
       
       const hashResult = await hashPassword(password);
       const userId = `${role}_` + Math.floor(Math.random() * 10000000);
@@ -2328,10 +2332,14 @@ class AegisAppController {
     if (path === '/api/admin/users/create') {
       const { name, email, mobile, password, role } = data;
       
-      let dupSnapshot = await db.collection('users').where('email', '==', email).get();
-      if (!dupSnapshot.empty) throw new Error("Email or mobile already registered!");
-      dupSnapshot = await db.collection('users').where('mobile', '==', mobile).get();
-      if (!dupSnapshot.empty) throw new Error("Email or mobile already registered!");
+      if (email) {
+        let dupSnapshot = await db.collection('users').where('email', '==', email).get();
+        if (!dupSnapshot.empty) throw new Error("Email or mobile already registered!");
+      }
+      if (mobile) {
+        let dupSnapshot = await db.collection('users').where('mobile', '==', mobile).get();
+        if (!dupSnapshot.empty) throw new Error("Email or mobile already registered!");
+      }
       
       const hashResult = await hashPassword(password);
       const userId = `${role}_` + Math.floor(Math.random() * 10000000);
