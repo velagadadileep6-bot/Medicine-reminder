@@ -873,8 +873,11 @@ const FIREBASE_CONFIG = {
   projectId: "YOUR_PROJECT_ID",
   storageBucket: "YOUR_STORAGE_BUCKET",
   messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  appId: "YOUR_APP_ID",
+  vapidKey: "YOUR_VAPID_KEY" // Optional: Generate in Project Settings -> Cloud Messaging -> Web configuration -> Web Push certificates
 };
+
+let messaging = null;
 
 // Synchronous SHA-256 for browser environment using subtle crypto
 async function hashPassword(password, salt) {
@@ -887,6 +890,87 @@ async function hashPassword(password, salt) {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   return { hash: hashHex, salt: salt };
+}
+
+// Initialize Firebase Messaging
+function initFirebaseMessaging(config) {
+  if (typeof firebase === 'undefined' || !firebase.messaging || !firebase.messaging.isSupported()) {
+    console.warn("FCM messaging is not supported in this browser or SDK is missing.");
+    return;
+  }
+  
+  try {
+    messaging = firebase.messaging();
+    
+    // Register service worker explicitly for FCM
+    navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      .then((registration) => {
+        messaging.useServiceWorker(registration);
+        console.log("FCM Service Worker registered successfully:", registration);
+        
+        // Try to retrieve token if a user is logged in
+        if (stateStore && stateStore.data && stateStore.data.activePatient) {
+          getAndSaveFCMToken(stateStore.data.activePatient.id, config.vapidKey);
+        }
+      })
+      .catch((err) => {
+        console.error("FCM Service Worker registration failed:", err);
+      });
+      
+    // Handle foreground messages
+    messaging.onMessage((payload) => {
+      console.log("Foreground push message received:", payload);
+      if (payload.notification) {
+        const title = payload.notification.title || 'Medicine Reminder';
+        const body = payload.notification.body || 'It is time to take your dose!';
+        appController.showPreAlertNotification('medicine', title, body, {
+          en: body,
+          hi: body,
+          te: body
+        });
+      }
+    });
+  } catch (err) {
+    console.error("Failed to initialize FCM messaging:", err);
+  }
+}
+
+// Retrieve device registration token and save it to Firestore
+async function getAndSaveFCMToken(userId, vapidKey = null) {
+  if (!messaging || !db) return;
+  
+  try {
+    const options = {};
+    if (vapidKey && vapidKey !== 'YOUR_VAPID_KEY') {
+      options.vapidKey = vapidKey;
+    }
+    
+    // Request permission explicitly before getting token
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      console.warn("Notification permission was denied by user.");
+      return;
+    }
+
+    const currentToken = await messaging.getToken(options);
+    if (currentToken) {
+      console.log("FCM registration token obtained:", currentToken);
+      
+      // Update token in Firestore users collection
+      await db.collection('users').doc(userId).update({
+        fcmToken: currentToken
+      });
+      
+      // Update token in local stateStore
+      if (stateStore && stateStore.data && stateStore.data.activePatient && stateStore.data.activePatient.id === userId) {
+        stateStore.data.activePatient.fcmToken = currentToken;
+      }
+    } else {
+      console.warn("No registration token available. Request permission to generate one.");
+    }
+  } catch (err) {
+    console.error("An error occurred while retrieving FCM token:", err);
+  }
 }
 
 // Initialize Firebase if config exists in code or localStorage
@@ -918,6 +1002,9 @@ function initFirebase() {
       
       // Seed default users in background if newly connected
       seedFirebaseDatabase();
+
+      // Initialize FCM Messaging
+      initFirebaseMessaging(config);
     } catch (e) {
       console.error("Failed to initialize Firebase:", e);
     }
@@ -2850,7 +2937,12 @@ class AegisAppController {
           stateStore.data.linkedPatient = result.linkedPatient || null;
           stateStore.data.linkedPatientSettings = result.linkedPatientSettings || null;
           
-          stateStore.saveState();
+           stateStore.saveState();
+          
+          // Request notification permissions and register FCM device token
+          if (typeof getAndSaveFCMToken === 'function') {
+            getAndSaveFCMToken(stateStore.data.activePatient.id, FIREBASE_CONFIG.vapidKey);
+          }
           
           // Trigger celebratory tone
           this.playSuccessConfetti();
@@ -2939,6 +3031,11 @@ class AegisAppController {
             stateStore.data.linkedPatientSettings = result.linkedPatientSettings || null;
 
             stateStore.saveState();
+
+            // Request notification permissions and register FCM device token
+            if (typeof getAndSaveFCMToken === 'function') {
+              getAndSaveFCMToken(stateStore.data.activePatient.id, FIREBASE_CONFIG.vapidKey);
+            }
 
             this.playSuccessConfetti();
             
