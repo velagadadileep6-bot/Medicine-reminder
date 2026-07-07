@@ -68,8 +68,9 @@
         <p class="sub-label" id="login-sub-text" data-i18n="loginSub">Log in to track your medicine schedules</p>
       </div>
 
-      <div id="login-test-helper" class="helper-text hide" style="background: rgba(217, 119, 6, 0.05); border: 1px dashed rgba(217, 119, 6, 0.2); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); text-align: center; font-size: 0.75rem; color: var(--amber-color); margin-bottom: 0.5rem;">
-        Test Account: <strong id="login-test-email">doctor@medicare.com</strong> / Password: <strong id="login-test-pass">doctor</strong>
+      <div id="login-test-helper" class="helper-text hide" style="background: rgba(20, 184, 166, 0.08); border: 1px dashed rgba(20, 184, 166, 0.3); padding: 0.6rem 0.8rem; border-radius: var(--border-radius-sm); text-align: center; font-size: 0.75rem; color: var(--teal-color); margin-bottom: 0.75rem; cursor: pointer; transition: all 0.2s;" onclick="appController.handleQuickLogin()">
+        🔑 <strong>Quick Demo Login:</strong> <span id="login-test-email">doctor@medicare.com</span> / <span id="login-test-pass">doctor</span>
+        <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 0.2rem;" data-i18n="clickQuickLogin">Click here to log in instantly!</div>
       </div>
 
       <form id="login-form" class="auth-form">

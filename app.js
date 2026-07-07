@@ -76,6 +76,7 @@ const TRANSLATIONS = {
     loginBtn: "Log In",
     googleBtn: "Continue with Google",
     orDivider: "OR",
+    clickQuickLogin: "Click here to log in instantly!",
     noAccount: "Don't have an account?",
     registerLink: "Register Now",
     registerTitle: "Patient Registration",
@@ -253,6 +254,7 @@ const TRANSLATIONS = {
     loginBtn: "लॉगिन करें",
     googleBtn: "Google के साथ जारी रखें",
     orDivider: "या",
+    clickQuickLogin: "तुरंत लॉगिन करने के लिए यहां क्लिक करें!",
     noAccount: "खाता नहीं है?",
     registerLink: "अभी रजिस्टर करें",
     registerTitle: "मरीज पंजीकरण (रजिस्ट्रेशन)",
@@ -431,6 +433,7 @@ const TRANSLATIONS = {
     loginBtn: "లాగిన్ అవ్వండి",
     googleBtn: "Google తో కొనసాగించండి",
     orDivider: "లేదా",
+    clickQuickLogin: "తక్షణమే లాగిన్ అవ్వడానికి ఇక్కడ క్లిక్ చేయండి!",
     noAccount: "ఖాతా లేదా ప్రొఫైల్ లేదా?",
     registerLink: "ఇప్పుడే నమోదు చేసుకోండి",
     registerTitle: "రోగి రిజిస్ట్రేషన్ (నమోదు)",
@@ -2533,6 +2536,12 @@ class AegisAppController {
         if (portal) {
           portal.classList.remove('hide');
           portal.classList.add('login-slide-up-active');
+        }
+        const testHelper = document.getElementById('login-test-helper');
+        if (testHelper) {
+          document.getElementById('login-test-email').textContent = 'patient@medicare.com';
+          document.getElementById('login-test-pass').textContent = 'patient';
+          testHelper.classList.remove('hide');
         }
       }
 
@@ -6501,6 +6510,20 @@ class AegisAppController {
       element.style.opacity = '0';
 
       setTimeout(() => element.remove(), 1000);
+    }
+  }
+
+  // Pre-fill and automatically submit demo credentials
+  handleQuickLogin() {
+    const email = document.getElementById('login-test-email').textContent;
+    const pass = document.getElementById('login-test-pass').textContent;
+    
+    document.getElementById('login-identifier').value = email;
+    document.getElementById('login-password').value = pass;
+    
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+      loginForm.dispatchEvent(new Event('submit'));
     }
   }
 }
