@@ -848,7 +848,11 @@
         <div id="cg-no-patient-view" class="dashboard-card cg-no-patient-state">
           <span>📭</span>
           <h3 data-i18n="noLinkedPatientTitle">No Linked Patient</h3>
-          <p style="max-width: 450px;" data-i18n="noLinkedPatientDesc">You haven't linked any patient profile. To start monitoring, please enter your patient's registered Email or Mobile Number during registration, or configure it in your account details.</p>
+          <p style="max-width: 450px;" data-i18n="noLinkedPatientDesc">You haven't linked any patient profile. To start monitoring, please link a patient using their registered Email or Mobile number below.</p>
+          <div style="margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-width: 300px; align-items: center;">
+            <input type="text" id="cg-link-patient-input" class="form-control" style="text-align: center;" placeholder="Patient Email or Mobile">
+            <button type="button" id="cg-link-patient-btn" class="btn btn-teal" style="width: 100%;" onclick="appController.linkPatientProfile()">Link Patient</button>
+          </div>
         </div>
 
         <div id="cg-patient-data-grid" class="caregiver-stats-container hide">

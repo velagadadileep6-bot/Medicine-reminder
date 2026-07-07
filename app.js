@@ -2076,6 +2076,33 @@ class AegisAppController {
       localStorage.setItem('aegis_local_db', JSON.stringify(dbData));
       return { success: true };
     }
+
+    if (path === '/api/caregiver/link-patient') {
+      const { caregiverId, patientIdentifier } = data;
+      const patient = dbData.users.find(u => (u.email === patientIdentifier || u.mobile === patientIdentifier) && u.role === 'patient');
+      if (!patient) {
+        throw new Error("Patient profile not found! Please check the email/mobile number.");
+      }
+      
+      const caregiverIdx = dbData.users.findIndex(u => u.id === caregiverId);
+      if (caregiverIdx > -1) {
+        dbData.users[caregiverIdx].primaryDoctorId = patientIdentifier;
+      }
+      
+      localStorage.setItem('aegis_local_db', JSON.stringify(dbData));
+      
+      const pState = dbData.states[patient.id] || { medicines: [], appointments: [], logs: [], settings: { theme: 'dark', lang: 'en' }, healthLogs: [] };
+      
+      return {
+        success: true,
+        linkedPatient: { ...patient },
+        medicines: pState.medicines || [],
+        appointments: pState.appointments || [],
+        logs: pState.logs || [],
+        linkedPatientSettings: pState.settings || {},
+        healthLogs: pState.healthLogs || []
+      };
+    }
     
     throw new Error("Endpoint not supported in LocalDB fallback!");
   }
@@ -2496,6 +2523,55 @@ class AegisAppController {
       await db.collection('users').doc(userId).delete();
       await db.collection('states').doc(userId).delete();
       return { success: true };
+    }
+
+    if (path === '/api/caregiver/link-patient') {
+      const { caregiverId, patientIdentifier } = data;
+      
+      let pSnapshot = await db.collection('users')
+        .where('role', '==', 'patient')
+        .where('email', '==', patientIdentifier)
+        .get();
+      if (pSnapshot.empty) {
+        pSnapshot = await db.collection('users')
+          .where('role', '==', 'patient')
+          .where('mobile', '==', patientIdentifier)
+          .get();
+      }
+      
+      if (pSnapshot.empty) {
+        throw new Error("Patient profile not found! Please check the email/mobile number.");
+      }
+      
+      const patient = pSnapshot.docs[0].data();
+      
+      // Update caregiver's patient link field
+      await db.collection('users').doc(caregiverId).update({
+        primaryDoctorId: patientIdentifier
+      });
+      
+      // Fetch patient state
+      const pStateDoc = await db.collection('states').doc(patient.id).get();
+      let medicines = [], appointments = [], logs = [], linkedPatientSettings = {}, healthLogs = [];
+      
+      if (pStateDoc.exists) {
+        const pState = pStateDoc.data();
+        medicines = pState.medicines || [];
+        appointments = pState.appointments || [];
+        logs = pState.logs || [];
+        linkedPatientSettings = pState.settings || {};
+        healthLogs = pState.healthLogs || [];
+      }
+      
+      return {
+        success: true,
+        linkedPatient: patient,
+        medicines,
+        appointments,
+        logs,
+        linkedPatientSettings,
+        healthLogs
+      };
     }
     
     throw new Error("Endpoint not found or supported via Firebase!");
@@ -6535,6 +6611,45 @@ class AegisAppController {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
       loginForm.dispatchEvent(new Event('submit'));
+    }
+  }
+
+  // Link caregiver profile to a patient's details
+  async linkPatientProfile() {
+    const active = stateStore.data.activePatient;
+    if (!active) return;
+    
+    const inputVal = document.getElementById('cg-link-patient-input').value.trim();
+    if (!inputVal) {
+      alert("Please enter patient Email or Mobile Number!");
+      return;
+    }
+    const patientIdentifier = inputVal.includes('@') ? inputVal.toLowerCase() : inputVal;
+    
+    try {
+      const result = await this.apiCall('/api/caregiver/link-patient', 'POST', {
+        caregiverId: active.id,
+        patientIdentifier: patientIdentifier
+      });
+      
+      if (result.success) {
+        // Update local caregiver document structure
+        stateStore.data.activePatient.primaryDoctorId = patientIdentifier;
+        stateStore.data.medicines = result.medicines || [];
+        stateStore.data.appointments = result.appointments || [];
+        stateStore.data.logs = result.logs || [];
+        stateStore.data.healthLogs = result.healthLogs || [];
+        stateStore.data.linkedPatient = result.linkedPatient || null;
+        stateStore.data.linkedPatientSettings = result.linkedPatientSettings || null;
+        
+        stateStore.saveState();
+        this.renderCaregiverDashboard();
+        
+        alert("Patient successfully linked!");
+      }
+    } catch (err) {
+      console.error("Failed to link patient:", err);
+      alert(err.message);
     }
   }
 }
