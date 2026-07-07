@@ -877,12 +877,12 @@ let db = null;
 // Replace the placeholder values with your actual Firebase project config.
 // ==========================================
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDJeZR5874ZvrBQJHinACi5cjgKDu8otLQ",
-  authDomain: "medicine-reminder-app-38607.firebaseapp.com",
-  projectId: "medicine-reminder-app-38607",
-  storageBucket: "medicine-reminder-app-38607.firebasestorage.app",
-  messagingSenderId: "218349099148",
-  appId: "1:218349099148:web:e207f3155d0fae2f7783a9",
+  apiKey: "AIzaSyCyVLoFNoB15deifPjL8SF6BsyZjOejKtM",
+  authDomain: "medicare-reminder-7c001.firebaseapp.com",
+  projectId: "medicare-reminder-7c001",
+  storageBucket: "medicare-reminder-7c001.firebasestorage.app",
+  messagingSenderId: "216535316330",
+  appId: "1:216535316330:web:6b52b5a87bbf3bb7aad713",
   vapidKey: "YOUR_VAPID_KEY" // Optional: Generate in Project Settings -> Cloud Messaging -> Web configuration -> Web Push certificates
 };
 

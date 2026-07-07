@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Rules for Users collection
+    match /users/{userId} {
+      // Allow read/write if the user is authenticated and the record matches their Google email
+      allow read, write: if request.auth != null && 
+        (resource == null || 
+         resource.data.email == request.auth.token.email || 
+         request.auth.token.email == request.resource.data.email);
+         
+      // Allow reading and creating caregivers/patients to support linking
+      allow read, create: if request.auth != null;
+    }
+    
+    // 2. Rules for States collection (schedules, dosages, vitals, logs)
+    match /states/{userId} {
+      // Allow read/write if the user owns this state document (email matches their authenticated Google email)
+      allow read, write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(userId)).data.email == request.auth.token.email;
+    }
+  }
+}
