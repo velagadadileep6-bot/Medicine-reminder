@@ -74,6 +74,8 @@ const TRANSLATIONS = {
     loginUserLabel: "Email or Mobile Number",
     password: "Password",
     loginBtn: "Log In",
+    googleBtn: "Continue with Google",
+    orDivider: "OR",
     noAccount: "Don't have an account?",
     registerLink: "Register Now",
     registerTitle: "Patient Registration",
@@ -249,6 +251,8 @@ const TRANSLATIONS = {
     loginUserLabel: "ईमेल या मोबाइल नंबर",
     password: "पासवर्ड",
     loginBtn: "लॉगिन करें",
+    googleBtn: "Google के साथ जारी रखें",
+    orDivider: "या",
     noAccount: "खाता नहीं है?",
     registerLink: "अभी रजिस्टर करें",
     registerTitle: "मरीज पंजीकरण (रजिस्ट्रेशन)",
@@ -425,6 +429,8 @@ const TRANSLATIONS = {
     loginUserLabel: "ఇమెయిల్ లేదా మొబైల్ నంబర్",
     password: "పాస్‌వర్డ్",
     loginBtn: "లాగిన్ అవ్వండి",
+    googleBtn: "Google తో కొనసాగించండి",
+    orDivider: "లేదా",
     noAccount: "ఖాతా లేదా ప్రొఫైల్ లేదా?",
     registerLink: "ఇప్పుడే నమోదు చేసుకోండి",
     registerTitle: "రోగి రిజిస్ట్రేషన్ (నమోదు)",
@@ -999,6 +1005,12 @@ function initFirebase() {
       }
       db = firebase.firestore();
       console.log("Firebase Firestore initialized successfully!");
+      
+      // Show Google login option
+      const googleContainer = document.getElementById('google-signin-container');
+      if (googleContainer) {
+        googleContainer.classList.remove('hide');
+      }
       
       // Seed default users in background if newly connected
       seedFirebaseDatabase();
@@ -2153,6 +2165,113 @@ class AegisAppController {
       };
     }
     
+    if (path === '/api/auth/google-login') {
+      const { email, name, photo, role } = data;
+      const iden = email.toLowerCase().trim();
+      
+      let querySnapshot = await db.collection('users')
+        .where('role', '==', role)
+        .where('email', '==', iden)
+        .get();
+      
+      let userData;
+      if (querySnapshot.empty) {
+        // Auto-register user
+        const userId = `${role}_` + Math.floor(Math.random() * 10000000);
+        userData = {
+          id: userId,
+          name: name,
+          role: role,
+          email: iden,
+          mobile: '',
+          age: null,
+          gender: null,
+          blood: null,
+          address: '',
+          photo: photo || null,
+          emergency: null,
+          primaryDoctorId: null,
+          doctorPhone: null,
+          adherence: 0,
+          streak: 0
+        };
+        await db.collection('users').doc(userId).set(userData);
+        await db.collection('states').doc(userId).set({
+          medicines: [],
+          appointments: [],
+          logs: [],
+          settings: { theme: 'dark', fontSize: 'normal', speechAlerts: true, highContrast: false, lang: 'en', doctorPhone: '' },
+          healthLogs: []
+        });
+      } else {
+        const doc = querySnapshot.docs[0];
+        userData = doc.data();
+      }
+      
+      let settings = { theme: 'dark', lang: 'en' };
+      let medicines = [];
+      let appointments = [];
+      let logs = [];
+      let healthLogs = [];
+      let linkedPatient = null;
+      let linkedPatientSettings = null;
+      
+      if (role === 'caregiver' && userData.primaryDoctorId) {
+        const linkedId = userData.primaryDoctorId;
+        let pSnapshot = await db.collection('users')
+          .where('role', '==', 'patient')
+          .where('email', '==', linkedId)
+          .get();
+        if (pSnapshot.empty) {
+          pSnapshot = await db.collection('users')
+            .where('role', '==', 'patient')
+            .where('mobile', '==', linkedId)
+            .get();
+        }
+        if (!pSnapshot.empty) {
+          const pDoc = pSnapshot.docs[0];
+          linkedPatient = pDoc.data();
+          const pId = linkedPatient.id;
+          
+          const pStateDoc = await db.collection('states').doc(pId).get();
+          if (pStateDoc.exists) {
+            const pState = pStateDoc.data();
+            medicines = pState.medicines || [];
+            appointments = pState.appointments || [];
+            logs = pState.logs || [];
+            linkedPatientSettings = pState.settings || {};
+            healthLogs = pState.healthLogs || [];
+          }
+        }
+      } else {
+        const stateDoc = await db.collection('states').doc(userData.id).get();
+        if (stateDoc.exists) {
+          const stateData = stateDoc.data();
+          medicines = stateData.medicines || [];
+          appointments = stateData.appointments || [];
+          logs = stateData.logs || [];
+          settings = stateData.settings || settings;
+          healthLogs = stateData.healthLogs || [];
+        }
+      }
+      
+      const userRes = { ...userData };
+      delete userRes.passwordHash;
+      delete userRes.salt;
+      
+      return {
+        success: true,
+        user: userRes,
+        settings: settings,
+        medicines: medicines,
+        appointments: appointments,
+        logs: logs,
+        healthLogs: healthLogs,
+        linkedPatient: linkedPatient,
+        linkedPatientSettings: linkedPatientSettings
+      };
+    }
+    
     if (path === '/api/auth/register') {
       const { name, email, mobile, password, role } = data;
       
@@ -2988,6 +3107,78 @@ class AegisAppController {
         alert(msg);
       }
     });
+
+    // Google Sign-In click handler
+    const googleLoginBtn = document.getElementById('google-login-btn');
+    if (googleLoginBtn) {
+      googleLoginBtn.addEventListener('click', async () => {
+        const role = document.getElementById('login-role').value;
+        try {
+          if (typeof firebase === 'undefined' || !firebase.auth) {
+            alert("Firebase Auth SDK is not loaded or configured!");
+            return;
+          }
+          
+          const provider = new firebase.auth.GoogleAuthProvider();
+          const result = await firebase.auth().signInWithPopup(provider);
+          const user = result.user;
+          const email = user.email.toLowerCase();
+          
+          const apiResult = await this.apiCall('/api/auth/google-login', 'POST', {
+            email: email,
+            name: user.displayName || email.split('@')[0],
+            photo: user.photoURL || null,
+            role: role
+          });
+          
+          if (apiResult.success) {
+            stateStore.data.activePatient = mapUserFromBackend(apiResult.user);
+            stateStore.data.settings = mapSettingsFromBackend(apiResult.settings || stateStore.data.settings);
+            stateStore.data.medicines = apiResult.medicines || [];
+            stateStore.data.appointments = apiResult.appointments || [];
+            stateStore.data.logs = apiResult.logs || [];
+            stateStore.data.healthLogs = apiResult.healthLogs || [];
+            stateStore.data.linkedPatient = apiResult.linkedPatient || null;
+            stateStore.data.linkedPatientSettings = apiResult.linkedPatientSettings || null;
+            
+            stateStore.saveState();
+            
+            // Request notification permissions and register FCM device token
+            if (typeof getAndSaveFCMToken === 'function') {
+              getAndSaveFCMToken(stateStore.data.activePatient.id, FIREBASE_CONFIG.vapidKey);
+            }
+            
+            this.playSuccessConfetti();
+            
+            // Switch view based on role
+            if (role === 'patient') {
+              this.activeTab = 'tab-appointments';
+              this.checkAuthSession();
+              this.loadSettings();
+              this.renderDailySchedule();
+              this.renderCabinet();
+              this.renderAnalytics();
+              this.renderAppointments();
+              this.calculateStreak();
+            } else if (role === 'caregiver') {
+              this.activeTab = 'tab-caregiver-dashboard';
+              this.checkAuthSession();
+              this.loadSettings();
+              this.renderCaregiverDashboard();
+            } else if (role === 'doctor') {
+              this.activeTab = 'tab-doctor-dashboard';
+              this.checkAuthSession();
+            } else if (role === 'admin') {
+              this.activeTab = 'tab-admin-dashboard';
+              this.checkAuthSession();
+            }
+          }
+        } catch (err) {
+          console.error("Google Sign-In failed:", err);
+          alert("Google Sign-In failed: " + err.message);
+        }
+      });
+    }
 
     // Registration Form handler
     document.getElementById('register-form').addEventListener('submit', async (e) => {
