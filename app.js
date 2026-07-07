@@ -3120,25 +3120,33 @@ class AegisAppController {
     // Google Sign-In click handler
     const googleLoginBtn = document.getElementById('google-login-btn');
     if (googleLoginBtn) {
-      googleLoginBtn.addEventListener('click', async () => {
+      googleLoginBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
         const role = document.getElementById('login-role').value;
+        console.log("Google Sign-In button clicked. Selected role:", role);
+        
         try {
           if (typeof firebase === 'undefined' || !firebase.auth) {
+            console.error("Firebase SDK is not loaded!");
             alert("Firebase Auth SDK is not loaded or configured!");
             return;
           }
           
+          console.log("Initiating Google Sign-In popup...");
           const provider = new firebase.auth.GoogleAuthProvider();
           const result = await firebase.auth().signInWithPopup(provider);
           const user = result.user;
           const email = user.email.toLowerCase();
+          console.log("Firebase Auth success. Google Email:", email);
           
+          console.log("Calling backend apiCall for Google Login...");
           const apiResult = await this.apiCall('/api/auth/google-login', 'POST', {
             email: email,
             name: user.displayName || email.split('@')[0],
             photo: user.photoURL || null,
             role: role
           });
+          console.log("Google Login API result:", apiResult);
           
           if (apiResult.success) {
             stateStore.data.activePatient = mapUserFromBackend(apiResult.user);
@@ -3150,15 +3158,18 @@ class AegisAppController {
             stateStore.data.linkedPatient = apiResult.linkedPatient || null;
             stateStore.data.linkedPatientSettings = apiResult.linkedPatientSettings || null;
             
+            console.log("State updated with user profile. Saving state...");
             stateStore.saveState();
             
             // Request notification permissions and register FCM device token
             if (typeof getAndSaveFCMToken === 'function') {
+              console.log("Registering FCM device token...");
               getAndSaveFCMToken(stateStore.data.activePatient.id, FIREBASE_CONFIG.vapidKey);
             }
             
             this.playSuccessConfetti();
             
+            console.log("Routing view based on role:", role);
             // Switch view based on role
             if (role === 'patient') {
               this.activeTab = 'tab-appointments';
