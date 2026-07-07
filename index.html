@@ -467,6 +467,9 @@
                 </svg>
                 <span>Streak: <strong id="streak-days">0</strong> Days</span>
               </div>
+              <button id="dashboard-doctor-call-btn" class="btn btn-sm btn-glass text-teal" style="border-color: var(--teal-color); font-weight:700; margin-top: 0.8rem; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.25rem;">
+                📞 <span data-i18n="callDoctor">Call Doctor</span>
+              </button>
             </div>
           </div>
 
@@ -834,9 +837,14 @@
             <span id="cg-patient-pic-placeholder">👤</span>
             <img id="cg-patient-pic" src="" class="hide">
           </div>
-          <div class="cg-patient-details-row">
-            <h2 id="cg-patient-name">Patient Name</h2>
-            <div class="cg-patient-metadata">
+          <div class="cg-patient-details-row" style="width: 100%; flex-grow: 1;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; width:100%;">
+              <h2 id="cg-patient-name" style="margin:0;">Patient Name</h2>
+              <button id="caregiver-doctor-call-btn" class="btn btn-xs btn-glass text-teal" style="border-color: var(--teal-color); font-weight:700; padding: 0.35rem 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
+                📞 <span data-i18n="callDoctor">Call Doctor</span>
+              </button>
+            </div>
+            <div class="cg-patient-metadata" style="margin-top: 0.5rem;">
               <span>Age: <strong id="cg-patient-age">--</strong></span>
               <span>Blood Group: <strong id="cg-patient-blood">--</strong></span>
               <span>Emergency: <strong id="cg-patient-emergency">--</strong></span>
@@ -907,6 +915,15 @@
                 <div id="cg-weight-val" class="health-card-value" style="font-size: 1.5rem;">-- <small>kg</small></div>
                 <div id="cg-weight-status" class="health-card-status status-loading" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">--</div>
               </div>
+            </div>
+          </div>
+
+          <!-- Patient Doctor Appointments Checklist -->
+          <div class="caregiver-card" style="grid-column: 1 / -1;">
+            <h3 data-i18n="upcomingAppointments">Upcoming Check-ups</h3>
+            <div id="cg-patient-appointments-list" class="caregiver-patient-todo" style="max-height: 250px;">
+              <!-- items filled dynamically -->
+              <div class="font-muted text-center" style="padding: 1.5rem;" data-i18n="noAppointments">No check-ups scheduled.</div>
             </div>
           </div>
         </div>

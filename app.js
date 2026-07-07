@@ -201,7 +201,19 @@ const TRANSLATIONS = {
     preAlertMedTitle: "Medicine Reminder (In 5 mins)",
     preAlertMedBody: "It will be time to take {dosage} of {name} in 5 minutes.",
     preAlertApptTitle: "Check-up Reminder (In 5 mins)",
-    preAlertApptBody: "Appointment with Dr. {doctorName} for {purpose} in 5 minutes."
+    preAlertApptBody: "Appointment with Dr. {doctorName} for {purpose} in 5 minutes.",
+    outOfStock: "OUT OF STOCK",
+    lowStock: "LOW STOCK",
+    qtyLeft: "Qty Left",
+    refillAlert: "Refill Alert",
+    doses: "doses",
+    ofText: "of",
+    dosesTaken: "doses taken",
+    lastDose: "Last dose",
+    ago: "ago",
+    hoursAgo: "hours ago",
+    limitReached: "Limit Reached",
+    todayText: "Today"
   },
   hi: {
     title: "मेडिकेयर रिमाइंडर",
@@ -380,7 +392,19 @@ const TRANSLATIONS = {
     preAlertMedTitle: "दवा की याद (5 मिनट में)",
     preAlertMedBody: "5 मिनट में आपको {name} ({dosage}) की खुराक लेनी होगी।",
     preAlertApptTitle: "डॉक्टर अपॉइंटमेंट (5 मिनट में)",
-    preAlertApptBody: "5 मिनट में डॉक्टर {doctorName} ({purpose}) के साथ आपकी नियुक्ति है।"
+    preAlertApptBody: "5 मिनट में डॉक्टर {doctorName} ({purpose}) के साथ आपकी नियुक्ति है।",
+    outOfStock: "स्टॉक समाप्त",
+    lowStock: "कम स्टॉक",
+    qtyLeft: "मात्रा शेष",
+    refillAlert: "रिफिल चेतावनी",
+    doses: "खुराक",
+    ofText: "का",
+    dosesTaken: "खुराक ली गई",
+    lastDose: "अंतिम खुराक",
+    ago: "पहले",
+    hoursAgo: "घंटे पहले",
+    limitReached: "सीमा समाप्त",
+    todayText: "आज"
   },
   te: {
     title: "మెడికేర్ రిమైండర్",
@@ -559,7 +583,19 @@ const TRANSLATIONS = {
     preAlertMedTitle: "మందుల రిమైండర్ (5 నిమిషాల్లో)",
     preAlertMedBody: "5 నిమిషాల్లో మీరు {name} ({dosage}) మోతాదు తీసుకోవాలి.",
     preAlertApptTitle: "వైద్య పరీక్ష రిమైండర్ (5 నిమిషాల్లో)",
-    preAlertApptBody: "5 నిమిషాల్లో డాక్టర్ {doctorName} ({purpose}) తో మీకు అపాయింట్‌మెంట్ ఉంది."
+    preAlertApptBody: "5 నిమిషాల్లో డాక్టర్ {doctorName} ({purpose}) తో మీకు అపాయింట్‌మెంట్ ఉంది.",
+    outOfStock: "నిల్వ లేదు",
+    lowStock: "తక్కువ నిల్వ",
+    qtyLeft: "మిగిలిన నిల్వ",
+    refillAlert: "రీఫిల్ అలర్ట్",
+    doses: "మాత్రలు",
+    ofText: "లో",
+    dosesTaken: "మాత్రలు వేసుకున్నారు",
+    lastDose: "చివరి మోతాదు",
+    ago: "క్రితం",
+    hoursAgo: "గంటల క్రితం",
+    limitReached: "పరిమితి ముగిసింది",
+    todayText: "ఈరోజు"
   }
 };
 
@@ -1007,6 +1043,13 @@ function initFirebase() {
         firebase.initializeApp(config);
       }
       db = firebase.firestore();
+      db.enablePersistence({ synchronizeTabs: true })
+        .then(() => {
+          console.log("Firestore offline persistence enabled successfully!");
+        })
+        .catch((err) => {
+          console.warn("Firestore offline persistence initialization failed:", err.code);
+        });
       console.log("Firebase Firestore initialized successfully!");
       
       // Show Google login option
@@ -2809,12 +2852,22 @@ class AegisAppController {
 
     const callDoctorFn = () => {
       let phone = stateStore.data.settings.doctorPhone;
+      if (stateStore.data.activePatient) {
+        if (stateStore.data.activePatient.role === 'caregiver' && stateStore.data.linkedPatient) {
+          phone = stateStore.data.linkedPatient.doctorPhone || phone;
+        } else if (stateStore.data.activePatient.role === 'patient') {
+          phone = stateStore.data.activePatient.doctorPhone || phone;
+        }
+      }
       if (!phone) {
         phone = prompt(stateStore.data.settings.lang === 'te' ? "దయచేసి మీ డాక్టర్ ఫోన్ నెంబర్ టైప్ చేయండి:" :
                        stateStore.data.settings.lang === 'hi' ? "कृपया अपने डॉक्टर का फ़ोन नंबर दर्ज करें:" :
                        "Please enter your Doctor's phone number / emergency helpline:");
         if (phone) {
           stateStore.data.settings.doctorPhone = phone;
+          if (stateStore.data.activePatient && stateStore.data.activePatient.role === 'patient') {
+            stateStore.data.activePatient.doctorPhone = phone;
+          }
           stateStore.saveState();
         }
       }
@@ -2825,6 +2878,12 @@ class AegisAppController {
 
     document.getElementById('doctor-call-btn').addEventListener('click', callDoctorFn);
     document.getElementById('alarm-call-doctor-btn').addEventListener('click', callDoctorFn);
+    
+    const dbCallBtn = document.getElementById('dashboard-doctor-call-btn');
+    if (dbCallBtn) dbCallBtn.addEventListener('click', callDoctorFn);
+    
+    const cgCallBtn = document.getElementById('caregiver-doctor-call-btn');
+    if (cgCallBtn) cgCallBtn.addEventListener('click', callDoctorFn);
 
     // Analytics actions
     document.getElementById('clear-history-btn').addEventListener('click', () => {
@@ -4765,12 +4824,16 @@ class AegisAppController {
     // 3. Clear container
     container.innerHTML = '';
 
+    const lang = stateStore.data.settings.lang || 'en';
+
     if (stateStore.data.medicines.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">💊</div>
-          <p>Your medicine cabinet is empty! Add your first medicine to generate your daily schedule.</p>
-          <button class="btn btn-primary trigger-cabinet-modal-btn">Add Medicine Now</button>
+          <p>${lang === 'te' ? "మీ మందుల కేబినెట్ ఖాళీగా ఉంది! మీ రోజువారీ షెడ్యూల్‌ను సృష్టించడానికి మీ మొదటి మందును జోడించండి." : 
+                 lang === 'hi' ? "आपकी दवा की अलमारी खाली है! अपनी दैनिक समय-सारणी बनाने के लिए अपनी पहली दवा जोड़ें।" : 
+                 "Your medicine cabinet is empty! Add your first medicine to generate your daily schedule."}</p>
+          <button class="btn btn-primary trigger-cabinet-modal-btn">${lang === 'te' ? "మందులను జోడించండి" : lang === 'hi' ? "दवा जोड़ें" : "Add Medicine Now"}</button>
         </div>`;
       this.updateAdherenceWidgets(0, 0);
       this.renderNextDoseWidget(null);
@@ -4781,7 +4844,9 @@ class AegisAppController {
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">📅</div>
-          <p>No doses scheduled for the selected period today.</p>
+          <p>${lang === 'te' ? "నేటి ఈ సమయానికి ఎటువంటి మోతాదులు షెడ్యూల్ చేయబడలేదు." : 
+                 lang === 'hi' ? "आज चुने गए समय के लिए कोई खुराक निर्धारित नहीं है।" : 
+                 "No doses scheduled for the selected period today."}</p>
         </div>`;
     } else {
       filteredSchedules.forEach(item => {
@@ -5025,17 +5090,20 @@ class AegisAppController {
     const pctSpan = document.getElementById('adherence-pct');
     const fractionText = document.getElementById('adherence-fraction');
     const circle = document.getElementById('adherence-circle');
+    const lang = stateStore.data.settings.lang || 'en';
 
     if (totalCount === 0) {
       pctSpan.textContent = '0%';
-      fractionText.textContent = 'No doses scheduled';
+      fractionText.textContent = lang === 'te' ? "నేడు ఎటువంటి మోతాదులు షెడ్యూల్ చేయబడలేదు" : lang === 'hi' ? "आज कोई खुराक निर्धारित नहीं है" : 'No doses scheduled';
       circle.style.strokeDashoffset = '314.16'; // zero circle circumference offset
       return;
     }
 
     const pctVal = Math.round((takenCount / totalCount) * 100);
     pctSpan.textContent = `${pctVal}%`;
-    fractionText.textContent = `${takenCount} of ${totalCount} doses taken`;
+    fractionText.textContent = lang === 'te' ? `${totalCount} మోతాదులలో ${takenCount} తీసుకున్నారు` : 
+                               lang === 'hi' ? `${totalCount} में से ${takenCount} खुराक ली गई` : 
+                               `${takenCount} of ${totalCount} doses taken`;
 
     // Adjust stroke offset SVG circle
     const circ = 2 * Math.PI * 50; // 314.159
@@ -5046,12 +5114,13 @@ class AegisAppController {
   renderNextDoseWidget(upcomingDoseItem) {
     const display = document.getElementById('next-dose-display');
     const countdownBadge = document.getElementById('countdown-container');
+    const lang = stateStore.data.settings.lang || 'en';
 
     if (!upcomingDoseItem) {
       display.innerHTML = `
         <div class="next-dose-time">--:--</div>
-        <div class="next-dose-med">No doses remaining today</div>
-        <div class="next-dose-desc">All caught up! Check back tomorrow.</div>
+        <div class="next-dose-med">${lang === 'te' ? "నేడు ఇక ఏ మోతాదులు లేవు" : lang === 'hi' ? "आज कोई खुराक शेष नहीं है" : "No doses remaining today"}</div>
+        <div class="next-dose-desc">${lang === 'te' ? "అన్నీ పూర్తయ్యాయి! రేపు మళ్లీ చూడండి." : lang === 'hi' ? "सब पूरा हो गया! कल फिर देखें।" : "All caught up! Check back tomorrow."}</div>
       `;
       countdownBadge.classList.add('hide');
       return;
@@ -5140,6 +5209,7 @@ class AegisAppController {
     const container = document.getElementById('cabinet-grid-container');
     const searchVal = document.getElementById('cabinet-search').value.toLowerCase();
     const typeVal = document.getElementById('cabinet-form-filter').value;
+    const lang = stateStore.data.settings.lang || 'en';
 
     container.innerHTML = '';
 
@@ -5158,7 +5228,7 @@ class AegisAppController {
       container.innerHTML = `
         <div class="empty-state" style="grid-column: 1 / -1;">
           <div class="empty-icon">🗄️</div>
-          <p>No medications match your filter criteria.</p>
+          <p>${lang === 'te' ? "మీ శోధనకు తగిన మందులు లేవు." : lang === 'hi' ? "आपके फ़िल्टर के अनुकूल कोई दवा नहीं मिली।" : "No medications match your filter criteria."}</p>
         </div>`;
       return;
     }
@@ -5179,11 +5249,13 @@ class AegisAppController {
       const timeSlots = med.times.map(t => this.format12Hour(t)).join(', ');
 
       // Frequency strings
-      let freqString = "Every single day";
+      let freqString = lang === 'te' ? "ప్రతి రోజు" : lang === 'hi' ? "हर दिन" : "Every single day";
       if (med.frequency === 'specific_days') {
-        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayNames = lang === 'te' ? ['ఆది', 'సోమ', 'మంగళ', 'బుధ', 'గురు', 'శుక్ర', 'శని'] : 
+                         lang === 'hi' ? ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'] : 
+                         ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         const days = med.specificDays.map(d => dayNames[d]).join(', ');
-        freqString = `Only on: ${days}`;
+        freqString = `${lang === 'te' ? 'వారంలో' : lang === 'hi' ? 'केवल' : 'Only on'}: ${days}`;
       }
 
       // Stock logic
@@ -5197,10 +5269,10 @@ class AegisAppController {
 
         if (currentStock <= 0) {
           barClass = 'stock-critical';
-          warningBadge = '<span class="badge badge-normal font-danger" style="margin-left:auto">OUT OF STOCK</span>';
+          warningBadge = `<span class="badge badge-normal font-danger" style="margin-left:auto">${TRANSLATIONS[lang].outOfStock}</span>`;
         } else if (currentStock <= threshold) {
           barClass = 'stock-low';
-          warningBadge = '<span class="badge badge-normal text-amber" style="margin-left:auto">LOW STOCK</span>';
+          warningBadge = `<span class="badge badge-normal text-amber" style="margin-left:auto">${TRANSLATIONS[lang].lowStock}</span>`;
         }
 
         // Percentage calculations (assume 30 is initial base if larger than 30)
@@ -5210,7 +5282,7 @@ class AegisAppController {
         stockDisplay = `
           <div class="med-card-stock">
             <div class="stock-meter-wrapper">
-              <span>Qty Left: <strong>${currentStock}</strong></span>
+              <span>${TRANSLATIONS[lang].qtyLeft}: <strong>${currentStock}</strong></span>
               ${warningBadge}
             </div>
             <div class="stock-bar-bg">
@@ -5230,8 +5302,8 @@ class AegisAppController {
         </div>
 
         <div class="med-card-schedules">
-          <div>⏰ Hours: <strong>${timeSlots}</strong></div>
-          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.1rem;">📅 Frequency: ${freqString}</div>
+          <div>⏰ ${lang === 'te' ? 'వేళలు' : lang === 'hi' ? 'समय' : 'Hours'}: <strong>${timeSlots}</strong></div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.1rem;">📅 ${lang === 'te' ? 'ఫ్రీక్వెన్సీ' : lang === 'hi' ? 'आवृत्ति' : 'Frequency'}: ${freqString}</div>
         </div>
 
         ${med.instructions ? `<p class="font-muted" style="font-size:0.8rem; font-style:italic">"${med.instructions}"</p>` : ''}
@@ -5239,8 +5311,8 @@ class AegisAppController {
         ${stockDisplay}
 
         <div class="med-card-actions" style="display: flex; gap: 0.5rem; align-items: center;">
-          <button class="btn btn-glass btn-xs font-danger" onclick="appController.deleteMedicine('${med.id}')">Delete</button>
-          <button class="btn btn-glass btn-xs" onclick="appController.editMedicine('${med.id}')">Edit Cabinet</button>
+          <button class="btn btn-glass btn-xs font-danger" onclick="appController.deleteMedicine('${med.id}')">${lang === 'te' ? 'తొలగించు' : lang === 'hi' ? 'हटाएं' : 'Delete'}</button>
+          <button class="btn btn-glass btn-xs" onclick="appController.editMedicine('${med.id}')">${lang === 'te' ? 'సవరించు' : lang === 'hi' ? 'संपादित करें' : 'Edit Cabinet'}</button>
           <button class="action-check-btn btn-speak" title="Speak Aloud" onclick="appController.speakMedicineIntake('${med.id}')" style="width: 1.8rem; height: 1.8rem; border-radius: var(--border-radius-sm); color: var(--blue-color); border-color: rgba(59, 130, 246, 0.25); display: flex; align-items: center; justify-content: center; padding: 0;">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="14" height="14">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
@@ -6500,6 +6572,66 @@ class AegisAppController {
         weightVal.innerHTML = `-- <small>kg</small>`;
         weightStatus.textContent = TRANSLATIONS[lang].noData || 'No Data';
         weightStatus.className = 'health-card-status status-loading';
+      }
+    }
+    
+    // Render Linked Patient Doctor Appointments Checklist
+    const cgApptList = document.getElementById('cg-patient-appointments-list');
+    if (cgApptList) {
+      cgApptList.innerHTML = '';
+      const appointments = stateStore.data.appointments || [];
+      const userAppts = appointments.filter(a => a.patientId === lp.id);
+      
+      const upcoming = [];
+      const nowSim = clockEngine.getSimulatedDate();
+      const simTimeMs = nowSim.getTime();
+      
+      userAppts.forEach(appt => {
+        const [hour, min] = appt.time.split(':').map(Number);
+        const apptDate = parseLocalDate(appt.date);
+        apptDate.setHours(hour, min, 0, 0);
+        if (apptDate.getTime() >= simTimeMs && appt.status === 'pending') {
+          upcoming.push(appt);
+        }
+      });
+      
+      if (upcoming.length === 0) {
+        cgApptList.innerHTML = `<div class="font-muted text-center" style="padding: 1.5rem;" data-i18n="noAppointments">${TRANSLATIONS[lang].noAppointments || 'No check-ups scheduled.'}</div>`;
+      } else {
+        // Sort chronologically
+        upcoming.sort((a, b) => {
+          const dateTimeA = new Date(`${a.date}T${a.time}`);
+          const dateTimeB = new Date(`${b.date}T${b.time}`);
+          return dateTimeA - dateTimeB;
+        });
+        
+        upcoming.forEach(appt => {
+          const row = document.createElement('div');
+          row.className = 'cg-todo-item';
+          row.style.display = 'flex';
+          row.style.justifyContent = 'space-between';
+          row.style.alignItems = 'center';
+          row.style.padding = '0.75rem';
+          row.style.margin = '0 0 0.5rem 0';
+          row.style.borderRadius = 'var(--border-radius-md)';
+          row.style.border = '1px solid var(--glass-border)';
+          
+          const dateObj = parseLocalDate(appt.date);
+          const dayStr = dateObj.toLocaleDateString();
+          const time12 = this.format12Hour(appt.time);
+          
+          row.innerHTML = `
+            <div style="display:flex; flex-direction:column; gap:0.2rem;">
+              <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">${time12}</span>
+              <strong style="border-left: 3px solid var(--blue-color); padding-left: 0.5rem;">Dr. ${appt.doctorName}</strong>
+              <span style="font-size:0.75rem; color:var(--text-muted);">📅 ${dayStr} ${appt.purpose ? `• ${appt.purpose}` : ''}</span>
+            </div>
+            <div class="cg-todo-done" style="font-size:0.75rem; color:var(--blue-color); font-weight:700; text-transform:uppercase;">
+              Scheduled
+            </div>
+          `;
+          cgApptList.appendChild(row);
+        });
       }
     }
   }
