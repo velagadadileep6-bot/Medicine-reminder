@@ -7,12 +7,12 @@ importScripts('https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js')
 // Replace the placeholder values with your actual Firebase project config.
 // ==========================================
 const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDJeZR5874ZvrBQJHinACi5cjgKDu8otLQ",
+  authDomain: "medicine-reminder-app-38607.firebaseapp.com",
+  projectId: "medicine-reminder-app-38607",
+  storageBucket: "medicine-reminder-app-38607.firebasestorage.app",
+  messagingSenderId: "218349099148",
+  appId: "1:218349099148:web:e207f3155d0fae2f7783a9"
 };
 
 if (FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.projectId !== 'YOUR_PROJECT_ID') {
