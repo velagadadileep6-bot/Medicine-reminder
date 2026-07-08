@@ -131,8 +131,22 @@ body.high-contrast * {
   padding: 0;
 }
 
-button, select, input, a, textarea, .btn, .action-check-btn, .role-tab, .nav-tab {
+button, select, input, a, textarea, .btn, .action-check-btn, .role-tab, .nav-tab, .modal-close-btn {
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* InstantSnappy Active Click/Tap Feedback */
+button:active, 
+.btn:active, 
+.action-check-btn:active, 
+.role-tab:active, 
+.nav-tab:active, 
+#cabinet-layout-toggle-btn:active,
+.modal-close-btn:active {
+  transform: scale(0.95) !important;
+  transition: transform 0.05s ease !important;
+  opacity: 0.85;
 }
 
 body {
