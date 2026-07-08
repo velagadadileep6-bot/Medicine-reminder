@@ -5851,7 +5851,14 @@ class AegisAppController {
   }
 
   deleteMedicine(id) {
-    if (confirm("Are you sure you want to delete this medicine? All today's active schedules will be removed.")) {
+    const med = stateStore.data.medicines.find(m => m.id === id);
+    const medName = med ? med.name : 'this medicine';
+    const lang = stateStore.data.settings.lang || 'en';
+    const confirmMsg = lang === 'te' ? `మీరు నిజంగా "${medName}"ని తొలగించాలనుకుంటున్నారా?` :
+                      lang === 'hi' ? `क्या आप वाकई "${medName}" को हटाना चाहते हैं?` :
+                      `Are you sure you want to delete "${medName}"? All today's active schedules will be removed.`;
+
+    this.showCustomConfirm(confirmMsg, () => {
       stateStore.data.medicines = stateStore.data.medicines.filter(m => m.id !== id);
       
       // Clean corresponding historical logs? Typically we preserve history, so keep stateStore.data.logs
@@ -5861,7 +5868,78 @@ class AegisAppController {
       this.renderCabinet();
       this.renderAnalytics();
       this.calculateStreak();
-    }
+    });
+  }
+
+  showCustomConfirm(message, onConfirm) {
+    const existing = document.getElementById('aegis-custom-confirm');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'aegis-custom-confirm';
+    overlay.style = `
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(9, 13, 22, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 99999;
+      opacity: 0;
+      transition: opacity 0.1s ease-out;
+    `;
+
+    const box = document.createElement('div');
+    box.style = `
+      background: var(--bg-secondary);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-lg);
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 360px;
+      box-shadow: var(--shadow-lg);
+      transform: scale(0.95);
+      transition: transform 0.1s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: center;
+    `;
+
+    box.innerHTML = `
+      <div style="margin-bottom: 1rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--rose-color)" style="width: 3rem; height: 3rem; margin: 0 auto; display: block;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+      </div>
+      <h3 style="font-family: var(--font-family-title); font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 1.15rem;">Delete Medication</h3>
+      <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin-bottom: 1.5rem;">${message}</p>
+      <div style="display: flex; gap: 0.5rem; justify-content: center;">
+        <button id="confirm-cancel-btn" class="btn btn-glass btn-sm" style="flex: 1; padding: 0.5rem 1rem;">Cancel</button>
+        <button id="confirm-ok-btn" class="btn btn-teal btn-sm" style="flex: 1; padding: 0.5rem 1rem; background-color: var(--rose-color) !important; border-color: var(--rose-color) !important; color: white !important;">Delete</button>
+      </div>
+    `;
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+      box.style.transform = 'scale(1)';
+    });
+
+    const closeConfirm = () => {
+      overlay.style.opacity = '0';
+      box.style.transform = 'scale(0.95)';
+      setTimeout(() => overlay.remove(), 100);
+    };
+
+    overlay.querySelector('#confirm-cancel-btn').addEventListener('click', closeConfirm);
+    overlay.querySelector('#confirm-ok-btn').addEventListener('click', () => {
+      closeConfirm();
+      onConfirm();
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeConfirm();
+    });
   }
 
   editMedicine(id) {
