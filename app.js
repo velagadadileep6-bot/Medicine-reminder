@@ -812,7 +812,42 @@ class AegisState {
               }
             })
             .then(() => console.log("State synced to Firestore successfully"))
-            .catch(err => console.error("Error saving state to Firestore:", err));
+            .catch(err => {
+              console.warn("Error saving state to Firestore, falling back to local database sync:", err);
+              const localFallback = async () => {
+                await initLocalDB();
+                const dbData = JSON.parse(localStorage.getItem('aegis_local_db') || '{"users":[],"states":{}}');
+                const uId = targetUserId;
+                if (!dbData.states[uId]) dbData.states[uId] = {};
+                dbData.states[uId].medicines = stateData.medicines;
+                dbData.states[uId].appointments = stateData.appointments;
+                dbData.states[uId].logs = stateData.logs;
+                dbData.states[uId].settings = stateData.settings;
+                dbData.states[uId].healthLogs = stateData.healthLogs;
+                
+                if (stateData.profile) {
+                  const uIdx = dbData.users.findIndex(u => u.id === uId);
+                  if (uIdx > -1) {
+                    const u = dbData.users[uIdx];
+                    dbData.users[uIdx] = {
+                      ...u,
+                      name: stateData.profile.name !== undefined ? stateData.profile.name : u.name,
+                      age: stateData.profile.age !== undefined ? stateData.profile.age : u.age,
+                      gender: stateData.profile.gender !== undefined ? stateData.profile.gender : u.gender,
+                      blood: stateData.profile.blood !== undefined ? stateData.profile.blood : u.blood,
+                      address: stateData.profile.address !== undefined ? stateData.profile.address : u.address,
+                      photo: stateData.profile.photo !== undefined ? stateData.profile.photo : u.photo,
+                      emergency: stateData.profile.emergency !== undefined ? stateData.profile.emergency : u.emergency,
+                      primaryDoctorId: stateData.profile.primaryDoctorId !== undefined ? stateData.profile.primaryDoctorId : u.primaryDoctorId,
+                      doctorPhone: stateData.profile.doctorPhone !== undefined ? stateData.profile.doctorPhone : u.doctorPhone
+                    };
+                  }
+                }
+                localStorage.setItem('aegis_local_db', JSON.stringify(dbData));
+                console.log("State synced to client-side database fallback successfully");
+              };
+              localFallback();
+            });
           } else {
             // Local SQLite / LocalStorage Database Sync
             const syncState = async () => {
@@ -1855,8 +1890,8 @@ class AegisAppController {
       try {
         return await this.firebaseApiCall(url, method, data);
       } catch (err) {
-        console.error("Firebase API call error:", err);
-        throw err;
+        console.warn("Firebase API call error, falling back to local client-side database:", err);
+        return await this.localDBApiCall(url, method, data);
       }
     }
     
@@ -2738,6 +2773,25 @@ class AegisAppController {
     document.getElementById('cabinet-form-filter').addEventListener('change', () => this.renderCabinet());
     document.getElementById('time-of-day-filter').addEventListener('change', () => this.renderDailySchedule());
 
+    // Layout compact view toggle
+    const layoutToggleBtn = document.getElementById('cabinet-layout-toggle-btn');
+    if (layoutToggleBtn) {
+      const isCompact = localStorage.getItem('aegis_cabinet_compact') === 'true';
+      const container = document.getElementById('cabinet-grid-container');
+      if (isCompact && container) {
+        container.classList.add('compact-view');
+        layoutToggleBtn.classList.add('active');
+      }
+      layoutToggleBtn.addEventListener('click', () => {
+        const container = document.getElementById('cabinet-grid-container');
+        if (container) {
+          const newState = container.classList.toggle('compact-view');
+          layoutToggleBtn.classList.toggle('active');
+          localStorage.setItem('aegis_cabinet_compact', newState ? 'true' : 'false');
+        }
+      });
+    }
+
     // Add Medicine Modal overlay toggles
     document.getElementById('add-medicine-btn').addEventListener('click', () => this.showMedicineModal());
     document.getElementById('modal-close-btn').addEventListener('click', () => this.hideMedicineModal());
@@ -3186,6 +3240,14 @@ class AegisAppController {
     // Login Form handler
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const form = e.target;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const lang = stateStore.data.settings.lang || 'en';
+      const originalText = submitBtn.innerHTML;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span style="width:1rem; height:1rem; border:2px solid; border-top-color:transparent; border-radius:50%; display:inline-block; animation:spin 0.8s linear infinite; margin-right:0.5rem; vertical-align:middle;"></span> ` + (lang === 'te' ? "లాగిన్ అవుతోంది..." : lang === 'hi' ? "लॉगिन किया जा रहा है..." : "Authenticating...");
+
       const identifier = document.getElementById('login-identifier').value.trim();
       const loginIdentifier = identifier.includes('@') ? identifier.toLowerCase() : identifier;
       const pass = document.getElementById('login-password').value;
@@ -3208,7 +3270,7 @@ class AegisAppController {
           stateStore.data.linkedPatient = result.linkedPatient || null;
           stateStore.data.linkedPatientSettings = result.linkedPatientSettings || null;
           
-           stateStore.saveState();
+          stateStore.saveState();
           
           // Request notification permissions and register FCM device token
           if (typeof getAndSaveFCMToken === 'function') {
@@ -3249,6 +3311,9 @@ class AegisAppController {
                 "Invalid email/mobile, password, or role!";
         }
         alert(msg);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
       }
     });
 
@@ -3338,6 +3403,14 @@ class AegisAppController {
     // Registration Form handler
     document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const form = e.target;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const lang = stateStore.data.settings.lang || 'en';
+      const originalText = submitBtn.innerHTML;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span style="width:1rem; height:1rem; border:2px solid; border-top-color:transparent; border-radius:50%; display:inline-block; animation:spin 0.8s linear infinite; margin-right:0.5rem; vertical-align:middle;"></span> ` + (lang === 'te' ? "నమోదు చేయబడుతోంది..." : lang === 'hi' ? "पंजीकरण किया जा रहा है..." : "Registering...");
+
       const role = document.getElementById('reg-role').value;
       const name = document.getElementById('reg-name').value.trim();
       const age = document.getElementById('reg-age').value;
@@ -3423,6 +3496,9 @@ class AegisAppController {
                   "Email or mobile number already registered!";
           }
           alert(msg);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
         }
       };
 
