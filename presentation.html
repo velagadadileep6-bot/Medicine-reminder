@@ -62,7 +62,7 @@
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
       border-radius: 24px;
-      padding: 3rem;
+      padding: 3.5rem;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -122,8 +122,8 @@
 
     .grid-2col {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 3rem;
       align-items: center;
     }
 
@@ -177,48 +177,42 @@
       margin-bottom: 0;
     }
 
-    /* Cover Slide */
-    .cover-slide {
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
+    /* Cover Slide Styling */
     .cover-logo {
-      width: 5rem;
-      height: 5rem;
+      width: 4rem;
+      height: 4rem;
       background: linear-gradient(135deg, var(--teal-color) 0%, #0891b2 100%);
-      border-radius: 20px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 1.5rem;
-      box-shadow: 0 0 30px var(--teal-glow);
+      box-shadow: 0 0 20px var(--teal-glow);
     }
 
     .cover-logo svg {
-      width: 2.5rem;
-      height: 2.5rem;
+      width: 2rem;
+      height: 2rem;
       color: white;
     }
 
     .cover-title {
       font-family: var(--font-title);
-      font-size: 3.5rem;
+      font-size: 3.2rem;
       font-weight: 800;
       margin-bottom: 0.5rem;
       background: linear-gradient(135deg, #ffffff 30%, #0d9488 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      line-height: 1.1;
     }
 
     .cover-subtitle {
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       color: var(--text-secondary);
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
       font-weight: 500;
+      line-height: 1.4;
     }
 
     /* Navigation Bar */
@@ -290,7 +284,7 @@
     /* Mockups and Screenshots */
     .phone-mockup {
       width: 100%;
-      max-width: 210px;
+      max-width: 200px;
       border: 5px solid #222530;
       border-radius: 30px;
       box-shadow: 0 15px 35px rgba(0,0,0,0.6);
@@ -333,49 +327,60 @@
   <!-- Presentation Main Area -->
   <div class="presentation-container">
 
-    <!-- Slide 1: Cover -->
-    <div class="slide cover-slide active">
-      <div class="cover-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-        </svg>
-      </div>
-      <h1 class="cover-title">MediCare Reminder System</h1>
-      <p class="cover-subtitle">Your Health, Our Priority — Offline-First Adherence & Safety Platform</p>
-      <div style="font-size: 0.9rem; color: var(--text-muted);">
-        Press <span style="background: rgba(255,255,255,0.08); padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace;">Right Arrow</span> or use the controls below to navigate
+    <!-- Slide 1: Cover (Restructured: Side-by-Side Text and Mockup image!) -->
+    <div class="slide active">
+      <div class="slide-content grid-2col">
+        <div class="slide-text">
+          <div class="cover-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+            </svg>
+          </div>
+          <h1 class="cover-title">MediCare Reminder System</h1>
+          <p class="cover-subtitle">Your Health, Our Priority — Offline-First Medication Adherence & Safety Platform</p>
+          <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 1rem;">
+            Press <span style="background: rgba(255,255,255,0.08); padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace;">Right Arrow</span> or use the controls below to navigate
+          </div>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <div class="phone-mockup">
+            <img src="images/splash_screen.png" alt="Splash Screen Mockup">
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Slide 2: Abstract -->
     <div class="slide">
       <div class="slide-header">
-        <span class="slide-tag">01. Overview</span>
+        <span class="slide-tag">01. Project Summary</span>
         <h2 class="slide-title">Project Abstract</h2>
       </div>
       <div class="slide-content">
         <div class="slide-text">
-          <p>The MediCare Reminder System is an offline-first, highly responsive web portal built to enhance medication compliance and wellness for elderly patients.</p>
-          <ul class="feature-list">
+          <p style="font-size: 1.2rem; font-weight: 500; color: var(--text-primary);">
+            Medicare is a smart, offline-first application designed for elderly patients to manage daily medications easily. It works without internet, speaks instructions aloud, and syncs automatically to keep caregivers informed.
+          </p>
+          <ul class="feature-list" style="margin-top: 1rem;">
             <li class="feature-item">
-              <div class="feature-icon">★</div>
+              <div class="feature-icon">✓</div>
               <div class="feature-desc">
-                <h4>Optimistic Caching & Sync</h4>
-                <p>Ensures zero-lag updates by saving updates instantly to local IndexedDB, syncing with Firebase Firestore in the background.</p>
+                <h4>Works Offline (Zero Lag)</h4>
+                <p>Saves checklist updates instantly to browser database cache, then syncs with Firebase in the background.</p>
               </div>
             </li>
             <li class="feature-item">
-              <div class="feature-icon">★</div>
+              <div class="feature-icon">✓</div>
               <div class="feature-desc">
-                <h4>Adaptive Safety Ecosystem</h4>
-                <p>Includes direct doctor dialing, dynamic Speak Aloud instructions, and instant caregiver monitoring links.</p>
+                <h4>Dynamic Regional Support</h4>
+                <p>Translates headers, alerts, and custom medicine names fully into Hindi and Telugu.</p>
               </div>
             </li>
             <li class="feature-item">
-              <div class="feature-icon">★</div>
+              <div class="feature-icon">✓</div>
               <div class="feature-desc">
-                <h4>Regional Access Localizations</h4>
-                <p>Supports Hindi and Telugu options to translate dynamic state checklists and settings entries.</p>
+                <h4>Built-in Emergency Calling</h4>
+                <p>One-tap buttons to immediately dial primary doctors, caregivers, or public ambulance lines.</p>
               </div>
             </li>
           </ul>
@@ -386,32 +391,34 @@
     <!-- Slide 3: Problem Statement -->
     <div class="slide">
       <div class="slide-header">
-        <span class="slide-tag">02. Challenges</span>
+        <span class="slide-tag">02. The Challenges</span>
         <h2 class="slide-title">Problem Statement</h2>
       </div>
       <div class="slide-content">
         <div class="slide-text">
-          <p>Cognitive barriers, network instability, and poor interface accessibility limit the effectiveness of traditional healthcare applications for senior users.</p>
-          <ul class="feature-list">
+          <p style="font-size: 1.2rem; font-weight: 500; color: var(--text-primary);">
+            Standard health apps fail senior citizens due to high complexity, internet issues, and language barriers.
+          </p>
+          <ul class="feature-list" style="margin-top: 1rem;">
             <li class="feature-item">
-              <div class="feature-icon">&times;</div>
+              <div class="feature-icon" style="background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.2); color: var(--rose-color);">!</div>
               <div class="feature-desc">
-                <h4>Elderly Forgetfulness & Safety Risks</h4>
-                <p>Seniors skip scheduled doses, take wrong quantities, or double-dose medication due to memory loss.</p>
+                <h4>Elderly Forgetfulness</h4>
+                <p>Seniors frequently miss scheduled pills or double-dose medication because of memory declines.</p>
               </div>
             </li>
             <li class="feature-item">
-              <div class="feature-icon">&times;</div>
+              <div class="feature-icon" style="background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.2); color: var(--rose-color);">!</div>
               <div class="feature-desc">
-                <h4>No Emergency Support integration</h4>
-                <p>Traditional checkers do not integrate instant SOS alerts, public helpline indicators (108/112), or caregiver sync actions.</p>
+                <h4>Network Sync Lag</h4>
+                <p>Slow internet causes traditional apps to freeze or throw errors while trying to save medication changes.</p>
               </div>
             </li>
             <li class="feature-item">
-              <div class="feature-icon">&times;</div>
+              <div class="feature-icon" style="background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.2); color: var(--rose-color);">!</div>
               <div class="feature-desc">
-                <h4>Sluggish Server Sync Latency</h4>
-                <p>Standard web interfaces lag or freeze when internet speeds fluctuate, blocking users during database writes.</p>
+                <h4>English-Only Barriers</h4>
+                <p>Regional users who speak Hindi or Telugu find it hard to navigate settings and set dynamic logs.</p>
               </div>
             </li>
           </ul>
@@ -422,52 +429,52 @@
     <!-- Slide 4: Existing vs Proposed System -->
     <div class="slide">
       <div class="slide-header">
-        <span class="slide-tag">03. Comparison</span>
+        <span class="slide-tag">03. Solution Comparison</span>
         <h2 class="slide-title">Existing and Proposed System</h2>
       </div>
       <div class="slide-content grid-2col">
         <div class="slide-text" style="border-right: 1px solid var(--glass-border); padding-right: 2rem;">
-          <h3 style="font-family: var(--font-title); color: var(--rose-color); margin-bottom: 1rem; font-size: 1.3rem;">Existing Systems</h3>
+          <h3 style="font-family: var(--font-title); color: var(--rose-color); margin-bottom: 1.2rem; font-size: 1.3rem;">Existing Systems (Old Way)</h3>
           <ul class="feature-list">
             <li class="feature-item">
               <div class="feature-icon" style="background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.2); color: var(--rose-color); font-size: 0.8rem;">✕</div>
               <div class="feature-desc">
-                <p>Rely on manual sheets or static paper logs subject to misplacement.</p>
+                <p>Manual paper diaries or checklists that are easily lost or misplaced.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon" style="background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.2); color: var(--rose-color); font-size: 0.8rem;">✕</div>
               <div class="feature-desc">
-                <p>Cloud-dependent apps freeze during slow internet operations, throwing database timeout errors.</p>
+                <p>Cloud-only apps that freeze and block users when internet is slow.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon" style="background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.2); color: var(--rose-color); font-size: 0.8rem;">✕</div>
               <div class="feature-desc">
-                <p>No immediate doctor dialing integration during emergencies.</p>
+                <p>No immediate caregiver notification or direct dialing emergency buttons.</p>
               </div>
             </li>
           </ul>
         </div>
         <div class="slide-text">
-          <h3 style="font-family: var(--font-title); color: var(--teal-color); margin-bottom: 1rem; font-size: 1.3rem;">Proposed System</h3>
+          <h3 style="font-family: var(--font-title); color: var(--teal-color); margin-bottom: 1.2rem; font-size: 1.3rem;">Proposed System (Medicare)</h3>
           <ul class="feature-list">
             <li class="feature-item">
               <div class="feature-icon">✓</div>
               <div class="feature-desc">
-                <p>Firestore offline persist synchronized caching for zero-lag database writes.</p>
+                <p>Firestore IndexedDB local sync ensures zero database write delay.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon">✓</div>
               <div class="feature-desc">
-                <p>0.05s touch scales and 100ms modal opening times to eliminate touch delays.</p>
+                <p>0.05s button transitions and fast modal opening prevent click delays.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon">✓</div>
               <div class="feature-desc">
-                <p>Built-in emergency SOS alert modal, double call doctor buttons, and dynamic localizations.</p>
+                <p>Built-in Speak Aloud button, Hindi/Telugu options, and emergency calling.</p>
               </div>
             </li>
           </ul>
@@ -479,43 +486,43 @@
     <div class="slide">
       <div class="slide-header">
         <span class="slide-tag">04. Specifications</span>
-        <h2 class="slide-title">System Requirements</h2>
+        <h2 class="slide-title">Hardware and Software Requirements</h2>
       </div>
       <div class="slide-content grid-2col">
         <div class="slide-text" style="border-right: 1px solid var(--glass-border); padding-right: 2rem;">
-          <h3 style="font-family: var(--font-title); color: var(--teal-color); margin-bottom: 1rem; font-size: 1.3rem;">Hardware Requirements</h3>
+          <h3 style="font-family: var(--font-title); color: var(--teal-color); margin-bottom: 1.2rem; font-size: 1.3rem;">Hardware Requirements</h3>
           <ul class="feature-list">
             <li class="feature-item">
               <div class="feature-icon">📱</div>
               <div class="feature-desc">
                 <h4>User Devices</h4>
-                <p>Smartphone, Tablet, or PC (Windows, Android, iOS, macOS).</p>
+                <p>Any standard smartphone, tablet, laptop, or desktop computer.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon">📱</div>
               <div class="feature-desc">
-                <h4>System specs</h4>
-                <p>Core i3 processor or mobile SoC with minimum 2GB RAM.</p>
+                <h4>System Memory</h4>
+                <p>Minimum 2GB RAM (4GB RAM recommended for best performance).</p>
               </div>
             </li>
           </ul>
         </div>
         <div class="slide-text">
-          <h3 style="font-family: var(--font-title); color: var(--teal-color); margin-bottom: 1rem; font-size: 1.3rem;">Software Requirements</h3>
+          <h3 style="font-family: var(--font-title); color: var(--teal-color); margin-bottom: 1.2rem; font-size: 1.3rem;">Software Requirements</h3>
           <ul class="feature-list">
             <li class="feature-item">
               <div class="feature-icon">⚙️</div>
               <div class="feature-desc">
-                <h4>Web Browser</h4>
-                <p>Google Chrome, Safari, Microsoft Edge, or Firefox.</p>
+                <h4>Web Browsers</h4>
+                <p>Google Chrome, Apple Safari, Microsoft Edge, or Mozilla Firefox.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon">⚙️</div>
               <div class="feature-desc">
                 <h4>Development Architecture</h4>
-                <p>HTML5, Vanilla CSS3, ES6+ Javascript, Firebase Cloud Firestore DB.</p>
+                <p>HTML5, Vanilla CSS3, Javascript (ES6+), Firebase Cloud Firestore.</p>
               </div>
             </li>
           </ul>
@@ -526,32 +533,34 @@
     <!-- Slide 6: System Architecture -->
     <div class="slide">
       <div class="slide-header">
-        <span class="slide-tag">05. Diagram</span>
+        <span class="slide-tag">05. Data Flow</span>
         <h2 class="slide-title">System Architecture</h2>
       </div>
       <div class="slide-content">
         <div class="slide-text">
-          <p>The platform separates interface events, caching operations, and database synchronization to ensure lag-free usability:</p>
+          <p style="font-size: 1.15rem; color: var(--text-primary); margin-bottom: 1.5rem;">
+            The app uses a 3-layer architecture to provide offline speed and real-time alerts:
+          </p>
           <ul class="feature-list">
             <li class="feature-item">
               <div class="feature-icon">1</div>
               <div class="feature-desc">
-                <h4>User Interface Layer (HTML5/CSS3)</h4>
-                <p>Renders cards, captures instant taps, and translates headers based on local preferences.</p>
+                <h4>User Interface Layer (HTML/CSS/JS)</h4>
+                <p>Displays pill cards, captures touch scale inputs, and plays siren alerts.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon">2</div>
               <div class="feature-desc">
-                <h4>Local Offline Cache (IndexedDB)</h4>
-                <p>Caches all client states in browser memory, enabling instant reads and writes.</p>
+                <h4>Offline Cache Layer (IndexedDB Browser Store)</h4>
+                <p>Saves all logs instantly in local memory to prevent any database lags.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon">3</div>
               <div class="feature-desc">
-                <h4>Cloud DB layer & Caregiver Monitor</h4>
-                <p>Synchronizes offline caches with Firestore cloud database, updating caretaker dashboards in real-time.</p>
+                <h4>Cloud Sync Engine (Firebase Firestore)</h4>
+                <p>Syncs background data to the Caregiver Monitoring Grid when online.</p>
               </div>
             </li>
           </ul>
@@ -562,25 +571,25 @@
     <!-- Slide 7: Front End Design - Splash Screen -->
     <div class="slide">
       <div class="slide-header">
-        <span class="slide-tag">06. Visuals</span>
-        <h2 class="slide-title">Front End Design - Splash Screen</h2>
+        <span class="slide-tag">06. UI Design</span>
+        <h2 class="slide-title">Splash Screen & Entry</h2>
       </div>
       <div class="slide-content grid-2col">
         <div class="slide-text">
-          <p>An elegant, premium branding introduction designed to offer simple entry portals for both Patients and Caregivers.</p>
+          <p>The branding screen welcomes users with dark themes tailored for senior accessibility.</p>
           <ul class="feature-list">
             <li class="feature-item">
               <div class="feature-icon">★</div>
               <div class="feature-desc">
-                <h4>Curated Aesthetic Dark Theme</h4>
-                <p>Deep dark backgrounds coupled with subtle teal glows to reduce eye-strain, especially at night.</p>
+                <h4>Unified Entrance</h4>
+                <p>Quick login options for patients to track pills and caregivers to check adherence logs.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon">★</div>
               <div class="feature-desc">
-                <h4>Responsive Device Framed Layout</h4>
-                <p>Adapts fluidly to mobile form factors to provide a native application feel.</p>
+                <h4>Low Eye-Strain Colors</h4>
+                <p>Dark charcoal canvas with bright teal indicator glows to make options readable.</p>
               </div>
             </li>
           </ul>
@@ -596,25 +605,25 @@
     <!-- Slide 8: Front End Design - Dose Reminder -->
     <div class="slide">
       <div class="slide-header">
-        <span class="slide-tag">07. Visuals</span>
-        <h2 class="slide-title">Front End Design - Dose Due Alert</h2>
+        <span class="slide-tag">07. UI Design</span>
+        <h2 class="slide-title">Dose Due Reminders</h2>
       </div>
       <div class="slide-content grid-2col">
         <div class="slide-text">
-          <p>Responsive alarm cards overlay the app instantly when a dose is due. Provides clear, bold indicators for medicine name, category, and dosage details.</p>
+          <p>A high-contrast overlay card alerts the user immediately when a scheduled medicine is due.</p>
           <ul class="feature-list">
             <li class="feature-item">
               <div class="feature-icon">★</div>
               <div class="feature-desc">
-                <h4>Quick Actions & Call Doctor</h4>
-                <p>Allows logging intake ("Mark Taken"), snoozing for 10 minutes, or making an emergency call to the primary doctor instantly.</p>
+                <h4>One-Tap Actions</h4>
+                <p>Seniors can mark medication "Taken", "Snooze" it for 10 minutes, or dial their doctor instantly.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon">★</div>
               <div class="feature-desc">
-                <h4>Snappy UI Response (No delays)</h4>
-                <p>0.05s touch feedback active scales and 100ms modal transition animations ensure the buttons respond instantly on mobile tap.</p>
+                <h4>0ms Click Delays</h4>
+                <p>Optimized touch configuration prevents latency, making buttons react instantly.</p>
               </div>
             </li>
           </ul>
@@ -628,25 +637,25 @@
     <!-- Slide 9: Front End Design - Emergency SOS Alert -->
     <div class="slide">
       <div class="slide-header">
-        <span class="slide-tag">08. Visuals</span>
-        <h2 class="slide-title">Front End Design - Emergency SOS Alert</h2>
+        <span class="slide-tag">08. UI Design</span>
+        <h2 class="slide-title">SOS Emergency Center</h2>
       </div>
       <div class="slide-content grid-2col">
         <div class="slide-text">
-          <p>A single click triggers the high-priority SOS emergency dashboard. It flashes a warning, plays an alarm tone, and triggers caregiver notification pushes.</p>
+          <p>Tapping the SOS icon plays local siren warnings and opens the emergency portal.</p>
           <ul class="feature-list">
             <li class="feature-item">
               <div class="feature-icon">★</div>
               <div class="feature-desc">
-                <h4>Instant Helplines & Numbers</h4>
-                <p>Aggregates the user's primary emergency contact and doctor numbers along with public helplines (108 / 112).</p>
+                <h4>Quick Hotlines List</h4>
+                <p>Lists direct tap-to-call numbers for linked caregivers, primary doctors, and public ambulances.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon">★</div>
               <div class="feature-desc">
-                <h4>Safe Deactivation Action</h4>
-                <p>Simple, high-contrast action button lets the user deactivate the alarm instantly once they are safe.</p>
+                <h4>Instant Caregiver Alert</h4>
+                <p>Pushes critical panic warnings immediately to the caretaker dashboard live feed.</p>
               </div>
             </li>
           </ul>
@@ -657,17 +666,27 @@
       </div>
     </div>
 
-    <!-- Slide 10: Conclusion -->
-    <div class="slide cover-slide">
-      <h2 class="cover-title" style="font-size: 3rem;">MediCare Reminder System</h2>
-      <p class="cover-subtitle" style="margin-bottom: 2rem;">Offline-First, Zero click latency, and Immediate Caretaker SOS Alerts</p>
-      
-      <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 1.5rem 3rem; border-radius: 16px; margin-bottom: 2.5rem; text-align: center;">
-        <p style="margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 1rem;">Experience the Live Website:</p>
-        <a href="https://medicine-reminder-navy-phi.vercel.app" target="_blank" style="color: var(--teal-color); font-weight: 700; font-size: 1.25rem; text-decoration: none;">medicine-reminder-navy-phi.vercel.app</a>
+    <!-- Slide 10: Conclusion (Restructured: Side-by-Side closing details and screenshot!) -->
+    <div class="slide">
+      <div class="slide-content grid-2col">
+        <div class="slide-text">
+          <h2 class="cover-title" style="font-size: 2.8rem; margin-bottom: 1rem;">Simple, Safe & Reliable</h2>
+          <p style="font-size: 1.15rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 2rem;">
+            Medicare bridges the gap between elderly adherence and caregiver peace-of-mind by resolving device lags, network timeouts, and localization issues.
+          </p>
+          
+          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 1.25rem 2rem; border-radius: 16px; margin-bottom: 1.5rem;">
+            <p style="margin-bottom: 0.25rem; color: var(--text-secondary); font-size: 0.9rem;">Experience the Live Website:</p>
+            <a href="https://medicine-reminder-navy-phi.vercel.app" target="_blank" style="color: var(--teal-color); font-weight: 700; font-size: 1.1rem; text-decoration: none;">medicine-reminder-navy-phi.vercel.app</a>
+          </div>
+          
+          <p style="color: var(--text-muted); font-size: 0.85rem;">Thank you for your time!</p>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <!-- Displaying a mockup on the right side of the conclusion slide -->
+          <img class="modal-mockup" src="images/dose_due.png" alt="Conclusion Slide Mockup" style="max-height: 380px; object-fit: contain;">
+        </div>
       </div>
-      
-      <p style="color: var(--text-muted); font-size: 0.85rem;">Thank you!</p>
     </div>
 
   </div>
