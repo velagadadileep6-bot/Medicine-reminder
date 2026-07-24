@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediCare Reminder System - Presentation Slide Deck</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-primary: hsl(220, 25%, 7%);
+      --bg-secondary: hsl(220, 22%, 11%);
+      --text-primary: hsl(210, 40%, 98%);
+      --text-secondary: hsl(215, 15%, 72%);
+      --text-muted: hsl(215, 10%, 50%);
+      --teal-color: #0d9488;
+      --teal-glow: rgba(13, 148, 136, 0.4);
+      --rose-color: #f43f5e;
+      --glass-bg: rgba(18, 24, 38, 0.65);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --font-title: 'Outfit', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 50%, hsl(220, 25%, 10%) 0%, var(--bg-primary) 100%);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Presentation Wrapper */
+    .presentation-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 2rem;
+    }
+
+    /* Individual Slide Styles */
+    .slide {
+      display: none;
+      width: 100%;
+      max-width: 1100px;
+      min-height: 580px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 3rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: relative;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Header & Typography */
+    .slide-header {
+      margin-bottom: 2rem;
+    }
+
+    .slide-tag {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--teal-color);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: inline-block;
+    }
+
+    .slide-title {
+      font-family: var(--font-title);
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff 50%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+
+    .slide-content {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .grid-2col {
+      grid-template-columns: 1.2fr 0.8fr;
+    }
+
+    /* Text Lists */
+    .slide-text p {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .feature-icon {
+      background: rgba(13, 148, 136, 0.15);
+      border: 1px solid rgba(13, 148, 136, 0.2);
+      border-radius: 50%;
+      width: 2.2rem;
+      height: 2.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--teal-color);
+      flex-shrink: 0;
+    }
+
+    .feature-desc h4 {
+      font-family: var(--font-title);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .feature-desc p {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-bottom: 0;
+    }
+
+    /* Image frames */
+    .image-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .phone-mockup {
+      width: 100%;
+      max-width: 270px;
+      border: 6px solid #222530;
+      border-radius: 36px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      overflow: hidden;
+      aspect-ratio: 9 / 19.5;
+      background: #090d16;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone-mockup img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .modal-frame-img {
+      max-width: 100%;
+      max-height: 380px;
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* Cover Slide */
+    .cover-slide {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cover-logo {
+      width: 5rem;
+      height: 5rem;
+      background: linear-gradient(135deg, var(--teal-color) 0%, #0891b2 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 0 30px var(--teal-glow);
+    }
+
+    .cover-logo svg {
+      width: 2.5rem;
+      height: 2.5rem;
+      color: white;
+    }
+
+    .cover-title {
+      font-family: var(--font-title);
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #ffffff 30%, #0d9488 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cover-subtitle {
+      font-size: 1.3rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+      font-weight: 500;
+    }
+
+    /* Navigation Bar */
+    .nav-bar {
+      height: 70px;
+      border-top: 1px solid var(--glass-border);
+      background: rgba(9, 13, 22, 0.4);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      z-index: 10;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-logo {
+      color: var(--teal-color);
+      font-weight: 700;
+      font-family: var(--font-title);
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background: rgba(13, 148, 136, 0.2);
+      border-color: var(--teal-color);
+      color: var(--teal-color);
+    }
+
+    .nav-btn:active {
+      transform: scale(0.9);
+    }
+
+    .slide-indicator {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Tech Cards Grid */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      width: 100%;
+    }
+
+    .tech-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+
+    .tech-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(13, 148, 136, 0.3);
+    }
+
+    .tech-icon {
+      font-size: 2rem;
+      color: var(--teal-color);
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .tech-card h4 {
+      font-family: var(--font-title);
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .tech-card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .grid-2col {
+        grid-template-columns: 1fr;
+      }
+      .image-container {
+        display: none; /* Hide images on very small screens to fit text */
+      }
+      .tech-grid {
+        grid-template-columns: 1fr;
+      }
+      .slide {
+        padding: 2rem;
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Presentation Main Area -->
+  <div class="presentation-container">
+
+    <!-- Slide 1: Cover -->
+    <div class="slide cover-slide active">
+      <div class="cover-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+        </svg>
+      </div>
+      <h1 class="cover-title">MediCare Reminder System</h1>
+      <p class="cover-subtitle">Your Health, Our Priority — Offline-First Adherence & Safety Monitor</p>
+      <div style="font-size: 0.9rem; color: var(--text-muted);">
+        Press <span style="background: rgba(255,255,255,0.08); padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace;">Right Arrow</span> or use the controls below to navigate
+      </div>
+    </div>
+
+    <!-- Slide 2: Problem Statement -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">01. Challenges</span>
+        <h2 class="slide-title">Medication Non-Adherence</h2>
+      </div>
+      <div class="slide-content">
+        <div class="slide-text">
+          <p>Medication forgetfulness and lack of support for critical emergencies directly affect elderly wellness and healthcare compliance.</p>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">&times;</div>
+              <div class="feature-desc">
+                <h4>Elderly Forgetfulness & Errors</h4>
+                <p>Missing scheduled doses, miscalculating quantities, or taking multiple doses due to memory loss.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">&times;</div>
+              <div class="feature-desc">
+                <h4>Delayed Emergency Response</h4>
+                <p>Lack of instant SOS emergency contacts and easy-access direct dials for doctors or caregivers during crises.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">&times;</div>
+              <div class="feature-desc">
+                <h4>Sluggish Cloud Apps & Offline Outages</h4>
+                <p>Standard web portals lag, crash, or refuse to save data when the network is unstable or offline.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 3: Our Solution -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">02. Innovation</span>
+        <h2 class="slide-title">The Aegis Medicare Solution</h2>
+      </div>
+      <div class="slide-content">
+        <div class="slide-text">
+          <p>A smart, highly-optimized platform offering immediate client responsiveness, caregiver support, and emergency triggers.</p>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">✓</div>
+              <div class="feature-desc">
+                <h4>Zero-Lag Offline-First Architecture</h4>
+                <p>Firestore IndexedDB local cache updates immediately upon actions and syncs in the background.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">✓</div>
+              <div class="feature-desc">
+                <h4>Dynamic Multi-Language System</h4>
+                <p>Dynamically switches translations for dynamic templates (Hindi, Telugu, English) based on settings.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">✓</div>
+              <div class="feature-desc">
+                <h4>Caregiver Link & Live Dashboard</h4>
+                <p>Real-time patient adherence monitoring, vitals, upcoming check-ups, and emergency status updates.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Feature Spotlight - Splash Screen -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">03. Interface</span>
+        <h2 class="slide-title">Medicare Splash & Branding</h2>
+      </div>
+      <div class="slide-content grid-2col">
+        <div class="slide-text">
+          <p>An elegant, premium branding introduction designed to offer simple entry portals for both Patients and Caregivers.</p>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">★</div>
+              <div class="feature-desc">
+                <h4>Curated Aesthetic Dark Theme</h4>
+                <p>Deep dark backgrounds coupled with subtle teal glows to reduce eye-strain, especially at night.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">★</div>
+              <div class="feature-desc">
+                <h4>Responsive Device Framed Layout</h4>
+                <p>Adapts fluidly to mobile form factors to provide a native application feel.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="image-container">
+          <div class="phone-mockup">
+            <img src="images/splash_screen.png" alt="Splash Screen Mockup">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: Feature Spotlight - Dose Due -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">04. Usability</span>
+        <h2 class="slide-title">Tactile Dose Reminders</h2>
+      </div>
+      <div class="slide-content grid-2col">
+        <div class="slide-text">
+          <p>Responsive alarm cards overlay the app instantly when a dose is due. Provides clear, bold indicators for medicine name, category, and dosage details.</p>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">⏱</div>
+              <div class="feature-desc">
+                <h4>Quick Actions & Call Doctor</h4>
+                <p>Allows logging intake ("Mark Taken"), snoozing for 10 minutes, or making an emergency call to the primary doctor instantly.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">⏱</div>
+              <div class="feature-desc">
+                <h4>Snappy UI Response (No delays)</h4>
+                <p>0.05s touch feedback active scales and 100ms modal transition animations ensure the buttons respond instantly on mobile tap.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="image-container">
+          <img class="modal-frame-img" src="images/dose_due.png" alt="Dose Due Modal Alert">
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: Feature Spotlight - SOS Alert -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">05. Safety</span>
+        <h2 class="slide-title">Emergency SOS Trigger</h2>
+      </div>
+      <div class="slide-content grid-2col">
+        <div class="slide-text">
+          <p>A single click triggers the high-priority SOS emergency dashboard. It flashes a warning, plays an alarm tone, and triggers caregiver notification pushes.</p>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">🚨</div>
+              <div class="feature-desc">
+                <h4>Instant Helplines & Numbers</h4>
+                <p>Aggregates the user's primary emergency contact and doctor numbers along with public helplines (108 / 112).</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">🚨</div>
+              <div class="feature-desc">
+                <h4>Snappy Stop & Deactivate</h4>
+                <p>Simple, high-contrast action button lets the user deactivate the alarm instantly once they are safe.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="image-container">
+          <img class="modal-frame-img" src="images/sos_alert.png" alt="SOS Emergency Alert">
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Technical Stack & Resiliency -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">06. Technology</span>
+        <h2 class="slide-title">Under the Hood</h2>
+      </div>
+      <div class="slide-content">
+        <div class="tech-grid">
+          <div class="tech-card">
+            <span class="tech-icon">🌐</span>
+            <h4>Firestore Cache Persistence</h4>
+            <p>Uses local IndexedDB caching for optimistic writes. Saves/updates write immediately to client memory and sync in background.</p>
+          </div>
+          <div class="tech-card">
+            <span class="tech-icon">⚡</span>
+            <h4>No-Delay Tap Events</h4>
+            <p>Uses <code>touch-action: manipulation;</code> and custom 50ms active transitions to eliminate mobile click delays.</p>
+          </div>
+          <div class="tech-card">
+            <span class="tech-icon">🔒</span>
+            <h4>Resilient Data Fallback</h4>
+            <p>If Firebase operations fail or throw permission errors, the app gracefully falls back to local storage sync to prevent crashes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 8: Summary -->
+    <div class="slide cover-slide">
+      <h2 class="cover-title" style="font-size: 3rem;">Making Health Simple & Secure</h2>
+      <p class="cover-subtitle" style="margin-bottom: 2rem;">Offline-First Medication Reminders & Caregiver Live-Sync</p>
+      
+      <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 1.5rem 3rem; border-radius: 16px; margin-bottom: 2.5rem; text-align: center;">
+        <p style="margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 1rem;">Experience the Live Website:</p>
+        <a href="https://medicine-reminder-navy-phi.vercel.app" target="_blank" style="color: var(--teal-color); font-weight: 700; font-size: 1.25rem; text-decoration: none;">medicine-reminder-navy-phi.vercel.app</a>
+      </div>
+      
+      <p style="color: var(--text-muted); font-size: 0.85rem;">Thank you!</p>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation Control Bar -->
+  <div class="nav-bar">
+    <div class="nav-left">
+      <div style="width: 1.8rem; height: 1.8rem; background: var(--teal-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px var(--teal-glow);">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="white" width="14" height="14">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+        </svg>
+      </div>
+      <span class="nav-logo">MediCare Reminder Deck</span>
+    </div>
+    
+    <div class="nav-controls">
+      <span class="slide-indicator" id="slide-num">Slide 1 of 8</span>
+      <div style="display: flex; gap: 0.5rem;">
+        <button class="nav-btn" id="prev-btn" title="Previous Slide (Left Arrow)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        <button class="nav-btn" id="next-btn" title="Next Slide (Right Arrow/Space)">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    const indicator = document.getElementById('slide-num');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    let currentIdx = 0;
+
+    function updateSlides() {
+      slides.forEach((slide, idx) => {
+        if (idx === currentIdx) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+      indicator.textContent = `Slide ${currentIdx + 1} of ${slides.length}`;
+      prevBtn.disabled = currentIdx === 0;
+      nextBtn.disabled = currentIdx === slides.length - 1;
+    }
+
+    function nextSlide() {
+      if (currentIdx < slides.length - 1) {
+        currentIdx++;
+        updateSlides();
+      }
+    }
+
+    function prevSlide() {
+      if (currentIdx > 0) {
+        currentIdx--;
+        updateSlides();
+      }
+    }
+
+    // Controls listeners
+    nextBtn.addEventListener('click', nextSlide);
+    prevBtn.addEventListener('click', prevSlide);
+
+    // Keyboard controls
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      }
+    });
+
+    updateSlides();
+  </script>
+</body>
+</html>
