@@ -112,14 +112,17 @@
 
     .slide-content {
       flex: 1;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 2rem;
-      align-items: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1.5rem;
     }
 
     .grid-2col {
-      grid-template-columns: 1.2fr 0.8fr;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: flex-start;
     }
 
     /* Text Lists */
@@ -154,6 +157,7 @@
       justify-content: center;
       color: var(--teal-color);
       flex-shrink: 0;
+      font-weight: bold;
     }
 
     .feature-desc h4 {
@@ -169,42 +173,6 @@
       color: var(--text-secondary);
       line-height: 1.4;
       margin-bottom: 0;
-    }
-
-    /* Image frames */
-    .image-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-    }
-
-    .phone-mockup {
-      width: 100%;
-      max-width: 270px;
-      border: 6px solid #222530;
-      border-radius: 36px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-      overflow: hidden;
-      aspect-ratio: 9 / 19.5;
-      background: #090d16;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .phone-mockup img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .modal-frame-img {
-      max-width: 100%;
-      max-height: 380px;
-      border-radius: 16px;
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow-lg);
     }
 
     /* Cover Slide */
@@ -312,45 +280,51 @@
       font-weight: 600;
     }
 
-    /* Tech Cards Grid */
-    .tech-grid {
+    /* Frontend Images row layout */
+    .frontend-showcase {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 0.8fr 1.2fr 1.2fr;
       gap: 1.5rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .showcase-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .phone-mockup {
       width: 100%;
+      max-width: 180px;
+      border: 4px solid #222530;
+      border-radius: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      overflow: hidden;
+      aspect-ratio: 9 / 19.5;
+      background: #090d16;
     }
 
-    .tech-card {
-      background: rgba(255, 255, 255, 0.02);
+    .phone-mockup img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .modal-mockup {
+      width: 100%;
+      border-radius: 12px;
       border: 1px solid var(--glass-border);
-      border-radius: 16px;
-      padding: 1.5rem;
-      text-align: center;
-      transition: transform 0.2s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
 
-    .tech-card:hover {
-      transform: translateY(-5px);
-      border-color: rgba(13, 148, 136, 0.3);
-    }
-
-    .tech-icon {
-      font-size: 2rem;
-      color: var(--teal-color);
-      margin-bottom: 1rem;
-      display: block;
-    }
-
-    .tech-card h4 {
+    .showcase-label {
       font-family: var(--font-title);
-      font-size: 1.2rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .tech-card p {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      line-height: 1.4;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--teal-color);
     }
 
     /* Responsive */
@@ -358,10 +332,7 @@
       .grid-2col {
         grid-template-columns: 1fr;
       }
-      .image-container {
-        display: none; /* Hide images on very small screens to fit text */
-      }
-      .tech-grid {
+      .frontend-showcase {
         grid-template-columns: 1fr;
       }
       .slide {
@@ -384,213 +355,254 @@
         </svg>
       </div>
       <h1 class="cover-title">MediCare Reminder System</h1>
-      <p class="cover-subtitle">Your Health, Our Priority — Offline-First Adherence & Safety Monitor</p>
+      <p class="cover-subtitle">Your Health, Our Priority — Offline-First Adherence & Safety Platform</p>
       <div style="font-size: 0.9rem; color: var(--text-muted);">
         Press <span style="background: rgba(255,255,255,0.08); padding: 0.2rem 0.5rem; border-radius: 4px; font-family: monospace;">Right Arrow</span> or use the controls below to navigate
       </div>
     </div>
 
-    <!-- Slide 2: Problem Statement -->
+    <!-- Slide 2: Abstract -->
     <div class="slide">
       <div class="slide-header">
-        <span class="slide-tag">01. Challenges</span>
-        <h2 class="slide-title">Medication Non-Adherence</h2>
+        <span class="slide-tag">01. Overview</span>
+        <h2 class="slide-title">Project Abstract</h2>
       </div>
       <div class="slide-content">
         <div class="slide-text">
-          <p>Medication forgetfulness and lack of support for critical emergencies directly affect elderly wellness and healthcare compliance.</p>
-          <ul class="feature-list">
-            <li class="feature-item">
-              <div class="feature-icon">&times;</div>
-              <div class="feature-desc">
-                <h4>Elderly Forgetfulness & Errors</h4>
-                <p>Missing scheduled doses, miscalculating quantities, or taking multiple doses due to memory loss.</p>
-              </div>
-            </li>
-            <li class="feature-item">
-              <div class="feature-icon">&times;</div>
-              <div class="feature-desc">
-                <h4>Delayed Emergency Response</h4>
-                <p>Lack of instant SOS emergency contacts and easy-access direct dials for doctors or caregivers during crises.</p>
-              </div>
-            </li>
-            <li class="feature-item">
-              <div class="feature-icon">&times;</div>
-              <div class="feature-desc">
-                <h4>Sluggish Cloud Apps & Offline Outages</h4>
-                <p>Standard web portals lag, crash, or refuse to save data when the network is unstable or offline.</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- Slide 3: Our Solution -->
-    <div class="slide">
-      <div class="slide-header">
-        <span class="slide-tag">02. Innovation</span>
-        <h2 class="slide-title">The Aegis Medicare Solution</h2>
-      </div>
-      <div class="slide-content">
-        <div class="slide-text">
-          <p>A smart, highly-optimized platform offering immediate client responsiveness, caregiver support, and emergency triggers.</p>
-          <ul class="feature-list">
-            <li class="feature-item">
-              <div class="feature-icon">✓</div>
-              <div class="feature-desc">
-                <h4>Zero-Lag Offline-First Architecture</h4>
-                <p>Firestore IndexedDB local cache updates immediately upon actions and syncs in the background.</p>
-              </div>
-            </li>
-            <li class="feature-item">
-              <div class="feature-icon">✓</div>
-              <div class="feature-desc">
-                <h4>Dynamic Multi-Language System</h4>
-                <p>Dynamically switches translations for dynamic templates (Hindi, Telugu, English) based on settings.</p>
-              </div>
-            </li>
-            <li class="feature-item">
-              <div class="feature-icon">✓</div>
-              <div class="feature-desc">
-                <h4>Caregiver Link & Live Dashboard</h4>
-                <p>Real-time patient adherence monitoring, vitals, upcoming check-ups, and emergency status updates.</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <!-- Slide 4: Feature Spotlight - Splash Screen -->
-    <div class="slide">
-      <div class="slide-header">
-        <span class="slide-tag">03. Interface</span>
-        <h2 class="slide-title">Medicare Splash & Branding</h2>
-      </div>
-      <div class="slide-content grid-2col">
-        <div class="slide-text">
-          <p>An elegant, premium branding introduction designed to offer simple entry portals for both Patients and Caregivers.</p>
+          <p>The MediCare Reminder System is a highly responsive, offline-first web portal built to enhance medication compliance and wellness for elderly patients.</p>
           <ul class="feature-list">
             <li class="feature-item">
               <div class="feature-icon">★</div>
               <div class="feature-desc">
-                <h4>Curated Aesthetic Dark Theme</h4>
-                <p>Deep dark backgrounds coupled with subtle teal glows to reduce eye-strain, especially at night.</p>
+                <h4>Optimistic Caching & Sync</h4>
+                <p>Ensures zero-lag updates by saving updates instantly to local IndexedDB, syncing with Firebase Firestore in the background.</p>
               </div>
             </li>
             <li class="feature-item">
               <div class="feature-icon">★</div>
               <div class="feature-desc">
-                <h4>Responsive Device Framed Layout</h4>
-                <p>Adapts fluidly to mobile form factors to provide a native application feel.</p>
+                <h4>Adaptive Safety Ecosystem</h4>
+                <p>Includes direct doctor dialing, dynamic Speak Aloud instructions, and instant caregiver monitoring links.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">★</div>
+              <div class="feature-desc">
+                <h4>Regional Access Localizations</h4>
+                <p>Supports Hindi and Telugu options to translate dynamic state checklists and settings entries.</p>
               </div>
             </li>
           </ul>
         </div>
-        <div class="image-container">
-          <div class="phone-mockup">
-            <img src="images/splash_screen.png" alt="Splash Screen Mockup">
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- Slide 5: Feature Spotlight - Dose Due -->
+    <!-- Slide 3: Problem Statement -->
     <div class="slide">
       <div class="slide-header">
-        <span class="slide-tag">04. Usability</span>
-        <h2 class="slide-title">Tactile Dose Reminders</h2>
-      </div>
-      <div class="slide-content grid-2col">
-        <div class="slide-text">
-          <p>Responsive alarm cards overlay the app instantly when a dose is due. Provides clear, bold indicators for medicine name, category, and dosage details.</p>
-          <ul class="feature-list">
-            <li class="feature-item">
-              <div class="feature-icon">⏱</div>
-              <div class="feature-desc">
-                <h4>Quick Actions & Call Doctor</h4>
-                <p>Allows logging intake ("Mark Taken"), snoozing for 10 minutes, or making an emergency call to the primary doctor instantly.</p>
-              </div>
-            </li>
-            <li class="feature-item">
-              <div class="feature-icon">⏱</div>
-              <div class="feature-desc">
-                <h4>Snappy UI Response (No delays)</h4>
-                <p>0.05s touch feedback active scales and 100ms modal transition animations ensure the buttons respond instantly on mobile tap.</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div class="image-container">
-          <img class="modal-frame-img" src="images/dose_due.png" alt="Dose Due Modal Alert">
-        </div>
-      </div>
-    </div>
-
-    <!-- Slide 6: Feature Spotlight - SOS Alert -->
-    <div class="slide">
-      <div class="slide-header">
-        <span class="slide-tag">05. Safety</span>
-        <h2 class="slide-title">Emergency SOS Trigger</h2>
-      </div>
-      <div class="slide-content grid-2col">
-        <div class="slide-text">
-          <p>A single click triggers the high-priority SOS emergency dashboard. It flashes a warning, plays an alarm tone, and triggers caregiver notification pushes.</p>
-          <ul class="feature-list">
-            <li class="feature-item">
-              <div class="feature-icon">🚨</div>
-              <div class="feature-desc">
-                <h4>Instant Helplines & Numbers</h4>
-                <p>Aggregates the user's primary emergency contact and doctor numbers along with public helplines (108 / 112).</p>
-              </div>
-            </li>
-            <li class="feature-item">
-              <div class="feature-icon">🚨</div>
-              <div class="feature-desc">
-                <h4>Snappy Stop & Deactivate</h4>
-                <p>Simple, high-contrast action button lets the user deactivate the alarm instantly once they are safe.</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-        <div class="image-container">
-          <img class="modal-frame-img" src="images/sos_alert.png" alt="SOS Emergency Alert">
-        </div>
-      </div>
-    </div>
-
-    <!-- Slide 7: Technical Stack & Resiliency -->
-    <div class="slide">
-      <div class="slide-header">
-        <span class="slide-tag">06. Technology</span>
-        <h2 class="slide-title">Under the Hood</h2>
+        <span class="slide-tag">02. Challenges</span>
+        <h2 class="slide-title">Problem Statement</h2>
       </div>
       <div class="slide-content">
-        <div class="tech-grid">
-          <div class="tech-card">
-            <span class="tech-icon">🌐</span>
-            <h4>Firestore Cache Persistence</h4>
-            <p>Uses local IndexedDB caching for optimistic writes. Saves/updates write immediately to client memory and sync in background.</p>
+        <div class="slide-text">
+          <p>Cognitive barriers, network instability, and poor interface accessibility limit the effectiveness of traditional healthcare applications for senior users.</p>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">&times;</div>
+              <div class="feature-desc">
+                <h4>Elderly Forgetfulness & Safety Risks</h4>
+                <p>Seniors skip scheduled doses, take wrong quantities, or double-dose medication due to memory loss.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">&times;</div>
+              <div class="feature-desc">
+                <h4>No Emergency Support integration</h4>
+                <p>Traditional checkers do not integrate instant SOS alerts, public helpline indicators (108/112), or caregiver sync actions.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">&times;</div>
+              <div class="feature-desc">
+                <h4>Sluggish Server Sync Latency</h4>
+                <p>Standard web interfaces lag or freeze when internet speeds fluctuate, blocking users during database writes.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 4: Existing vs Proposed System -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">03. Comparison</span>
+        <h2 class="slide-title">Existing and Proposed System</h2>
+      </div>
+      <div class="slide-content grid-2col">
+        <div class="slide-text" style="border-right: 1px solid var(--glass-border); padding-right: 2rem;">
+          <h3 style="font-family: var(--font-title); color: var(--rose-color); margin-bottom: 1rem; font-size: 1.3rem;">Existing Systems</h3>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon" style="background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.2); color: var(--rose-color); font-size: 0.8rem;">✕</div>
+              <div class="feature-desc">
+                <p>Rely on manual sheets or static paper logs subject to misplacement.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon" style="background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.2); color: var(--rose-color); font-size: 0.8rem;">✕</div>
+              <div class="feature-desc">
+                <p>Cloud-dependent apps freeze during slow internet operations, throwing database timeout errors.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon" style="background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.2); color: var(--rose-color); font-size: 0.8rem;">✕</div>
+              <div class="feature-desc">
+                <p>No immediate doctor dialing integration during emergencies.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="slide-text">
+          <h3 style="font-family: var(--font-title); color: var(--teal-color); margin-bottom: 1rem; font-size: 1.3rem;">Proposed System</h3>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">✓</div>
+              <div class="feature-desc">
+                <p>Firestore offline persist synchronized caching for zero-lag database writes.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">✓</div>
+              <div class="feature-desc">
+                <p>0.05s touch scales and 100ms modal opening times to eliminate touch delays.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">✓</div>
+              <div class="feature-desc">
+                <p>Built-in emergency SOS alert modal, double call doctor buttons, and dynamic localizations.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 5: System Requirements -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">04. Specifications</span>
+        <h2 class="slide-title">System Requirements</h2>
+      </div>
+      <div class="slide-content grid-2col">
+        <div class="slide-text" style="border-right: 1px solid var(--glass-border); padding-right: 2rem;">
+          <h3 style="font-family: var(--font-title); color: var(--teal-color); margin-bottom: 1rem; font-size: 1.3rem;">Hardware Requirements</h3>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">📱</div>
+              <div class="feature-desc">
+                <h4>User Devices</h4>
+                <p>Smartphone, Tablet, or PC (Windows, Android, iOS, macOS).</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">📱</div>
+              <div class="feature-desc">
+                <h4>System specs</h4>
+                <p>Core i3 processor or mobile SoC with minimum 2GB RAM.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="slide-text">
+          <h3 style="font-family: var(--font-title); color: var(--teal-color); margin-bottom: 1rem; font-size: 1.3rem;">Software Requirements</h3>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">⚙️</div>
+              <div class="feature-desc">
+                <h4>Web Browser</h4>
+                <p>Google Chrome, Safari, Microsoft Edge, or Firefox.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">⚙️</div>
+              <div class="feature-desc">
+                <h4>Development Architecture</h4>
+                <p>HTML5, Vanilla CSS3, ES6+ Javascript, Firebase Cloud Firestore DB.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 6: System Architecture -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">05. Diagram</span>
+        <h2 class="slide-title">System Architecture</h2>
+      </div>
+      <div class="slide-content">
+        <div class="slide-text">
+          <p>The platform separates interface events, caching operations, and database synchronization to ensure lag-free usability:</p>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">1</div>
+              <div class="feature-desc">
+                <h4>User Interface Layer (HTML5/CSS3)</h4>
+                <p>Renders cards, captures instant taps, and translates headers based on local preferences.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">2</div>
+              <div class="feature-desc">
+                <h4>Local Offline Cache (IndexedDB)</h4>
+                <p>Caches all client states in browser memory, enabling instant reads and writes.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">3</div>
+              <div class="feature-desc">
+                <h4>Cloud DB layer & Caregiver Monitor</h4>
+                <p>Synchronizes offline caches with Firestore cloud database, updating caretaker dashboards in real-time.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 7: Front End Design -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">06. Visuals</span>
+        <h2 class="slide-title">Front End Design</h2>
+      </div>
+      <div class="slide-content">
+        <div class="frontend-showcase">
+          <div class="showcase-item">
+            <div class="phone-mockup">
+              <img src="images/splash_screen.png" alt="Splash Screen Mockup">
+            </div>
+            <span class="showcase-label">Splash Screen</span>
           </div>
-          <div class="tech-card">
-            <span class="tech-icon">⚡</span>
-            <h4>No-Delay Tap Events</h4>
-            <p>Uses <code>touch-action: manipulation;</code> and custom 50ms active transitions to eliminate mobile click delays.</p>
+          <div class="showcase-item">
+            <img class="modal-mockup" src="images/dose_due.png" alt="Dose Due Alert Overlay">
+            <span class="showcase-label">Dose Due Overlay Alert</span>
           </div>
-          <div class="tech-card">
-            <span class="tech-icon">🔒</span>
-            <h4>Resilient Data Fallback</h4>
-            <p>If Firebase operations fail or throw permission errors, the app gracefully falls back to local storage sync to prevent crashes.</p>
+          <div class="showcase-item">
+            <img class="modal-mockup" src="images/sos_alert.png" alt="SOS Emergency Modal">
+            <span class="showcase-label">Emergency SOS Alert</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 8: Summary -->
+    <!-- Slide 8: Conclusion -->
     <div class="slide cover-slide">
-      <h2 class="cover-title" style="font-size: 3rem;">Making Health Simple & Secure</h2>
-      <p class="cover-subtitle" style="margin-bottom: 2rem;">Offline-First Medication Reminders & Caregiver Live-Sync</p>
+      <h2 class="cover-title" style="font-size: 3rem;">MediCare Reminder System</h2>
+      <p class="cover-subtitle" style="margin-bottom: 2rem;">Offline-First, Zero click latency, and Immediate Caretaker SOS Alerts</p>
       
       <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 1.5rem 3rem; border-radius: 16px; margin-bottom: 2.5rem; text-align: center;">
         <p style="margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 1rem;">Experience the Live Website:</p>
