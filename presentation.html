@@ -124,7 +124,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 2rem;
-      align-items: flex-start;
+      align-items: center;
     }
 
     /* Text Lists */
@@ -287,31 +287,17 @@
       font-weight: 600;
     }
 
-    /* Frontend Images row layout */
-    .frontend-showcase {
-      display: grid;
-      grid-template-columns: 0.8fr 1.2fr 1.2fr;
-      gap: 1.5rem;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .showcase-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
+    /* Mockups and Screenshots */
     .phone-mockup {
       width: 100%;
-      max-width: 180px;
-      border: 4px solid #222530;
-      border-radius: 24px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      max-width: 210px;
+      border: 5px solid #222530;
+      border-radius: 30px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
       overflow: hidden;
       aspect-ratio: 9 / 19.5;
       background: #090d16;
+      margin: 0 auto;
     }
 
     .phone-mockup img {
@@ -322,24 +308,17 @@
 
     .modal-mockup {
       width: 100%;
-      border-radius: 12px;
+      max-width: 440px;
+      border-radius: 16px;
       border: 1px solid var(--glass-border);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-
-    .showcase-label {
-      font-family: var(--font-title);
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--teal-color);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+      margin: 0 auto;
+      display: block;
     }
 
     /* Responsive */
     @media (max-width: 900px) {
       .grid-2col {
-        grid-template-columns: 1fr;
-      }
-      .frontend-showcase {
         grid-template-columns: 1fr;
       }
       .slide {
@@ -376,7 +355,7 @@
       </div>
       <div class="slide-content">
         <div class="slide-text">
-          <p>The MediCare Reminder System is a highly responsive, offline-first web portal built to enhance medication compliance and wellness for elderly patients.</p>
+          <p>The MediCare Reminder System is an offline-first, highly responsive web portal built to enhance medication compliance and wellness for elderly patients.</p>
           <ul class="feature-list">
             <li class="feature-item">
               <div class="feature-icon">★</div>
@@ -580,33 +559,105 @@
       </div>
     </div>
 
-    <!-- Slide 7: Front End Design -->
+    <!-- Slide 7: Front End Design - Splash Screen -->
     <div class="slide">
       <div class="slide-header">
         <span class="slide-tag">06. Visuals</span>
-        <h2 class="slide-title">Front End Design</h2>
+        <h2 class="slide-title">Front End Design - Splash Screen</h2>
       </div>
-      <div class="slide-content">
-        <div class="frontend-showcase">
-          <div class="showcase-item">
-            <div class="phone-mockup">
-              <img src="images/splash_screen.png" alt="Splash Screen Mockup">
-            </div>
-            <span class="showcase-label">Splash Screen</span>
-          </div>
-          <div class="showcase-item">
-            <img class="modal-mockup" src="images/dose_due.png" alt="Dose Due Alert Overlay">
-            <span class="showcase-label">Dose Due Overlay Alert</span>
-          </div>
-          <div class="showcase-item">
-            <img class="modal-mockup" src="images/sos_alert.png" alt="SOS Emergency Modal">
-            <span class="showcase-label">Emergency SOS Alert</span>
+      <div class="slide-content grid-2col">
+        <div class="slide-text">
+          <p>An elegant, premium branding introduction designed to offer simple entry portals for both Patients and Caregivers.</p>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">★</div>
+              <div class="feature-desc">
+                <h4>Curated Aesthetic Dark Theme</h4>
+                <p>Deep dark backgrounds coupled with subtle teal glows to reduce eye-strain, especially at night.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">★</div>
+              <div class="feature-desc">
+                <h4>Responsive Device Framed Layout</h4>
+                <p>Adapts fluidly to mobile form factors to provide a native application feel.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <div class="phone-mockup">
+            <img src="images/splash_screen.png" alt="Splash Screen Mockup">
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Slide 8: Conclusion -->
+    <!-- Slide 8: Front End Design - Dose Reminder -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">07. Visuals</span>
+        <h2 class="slide-title">Front End Design - Dose Due Alert</h2>
+      </div>
+      <div class="slide-content grid-2col">
+        <div class="slide-text">
+          <p>Responsive alarm cards overlay the app instantly when a dose is due. Provides clear, bold indicators for medicine name, category, and dosage details.</p>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">★</div>
+              <div class="feature-desc">
+                <h4>Quick Actions & Call Doctor</h4>
+                <p>Allows logging intake ("Mark Taken"), snoozing for 10 minutes, or making an emergency call to the primary doctor instantly.</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">★</div>
+              <div class="feature-desc">
+                <h4>Snappy UI Response (No delays)</h4>
+                <p>0.05s touch feedback active scales and 100ms modal transition animations ensure the buttons respond instantly on mobile tap.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <img class="modal-mockup" src="images/dose_due.png" alt="Dose Due Alert Overlay">
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 9: Front End Design - Emergency SOS Alert -->
+    <div class="slide">
+      <div class="slide-header">
+        <span class="slide-tag">08. Visuals</span>
+        <h2 class="slide-title">Front End Design - Emergency SOS Alert</h2>
+      </div>
+      <div class="slide-content grid-2col">
+        <div class="slide-text">
+          <p>A single click triggers the high-priority SOS emergency dashboard. It flashes a warning, plays an alarm tone, and triggers caregiver notification pushes.</p>
+          <ul class="feature-list">
+            <li class="feature-item">
+              <div class="feature-icon">★</div>
+              <div class="feature-desc">
+                <h4>Instant Helplines & Numbers</h4>
+                <p>Aggregates the user's primary emergency contact and doctor numbers along with public helplines (108 / 112).</p>
+              </div>
+            </li>
+            <li class="feature-item">
+              <div class="feature-icon">★</div>
+              <div class="feature-desc">
+                <h4>Safe Deactivation Action</h4>
+                <p>Simple, high-contrast action button lets the user deactivate the alarm instantly once they are safe.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <img class="modal-mockup" src="images/sos_alert.png" alt="SOS Emergency Modal">
+        </div>
+      </div>
+    </div>
+
+    <!-- Slide 10: Conclusion -->
     <div class="slide cover-slide">
       <h2 class="cover-title" style="font-size: 3rem;">MediCare Reminder System</h2>
       <p class="cover-subtitle" style="margin-bottom: 2rem;">Offline-First, Zero click latency, and Immediate Caretaker SOS Alerts</p>
@@ -633,7 +684,7 @@
     </div>
     
     <div class="nav-controls">
-      <span class="slide-indicator" id="slide-num">Slide 1 of 8</span>
+      <span class="slide-indicator" id="slide-num">Slide 1 of 10</span>
       <div style="display: flex; gap: 0.5rem;">
         <button class="nav-btn" id="prev-btn" title="Previous Slide (Left Arrow)">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="16" height="16">
