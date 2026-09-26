@@ -1,0 +1,20 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "🚀 Run Fullstack Server (Python + Web UI)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/server.py",
+            "console": "integratedTerminal",
+            "jinja": true
+        },
+        {
+            "name": "⚙️ Run Backend Server (backend/server.py)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/backend/server.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}

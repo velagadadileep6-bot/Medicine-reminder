@@ -209,13 +209,53 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                           self.log_date_time_string(),
                           format%args))
 
+    def translate_path(self, path):
+        # Translate requested URL path to local file path
+        target_path = super().translate_path(path)
+        if os.path.exists(target_path) and not os.path.isdir(target_path):
+            return target_path
+            
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        clean_path = path.split('?')[0].lstrip('/')
+        if not clean_path or clean_path == '/':
+            clean_path = 'index.html'
+            
+        # Check root directory
+        root_target = os.path.join(script_dir, clean_path)
+        if os.path.exists(root_target):
+            return root_target
+            
+        # Check parent directory (if running inside backend/)
+        parent_target = os.path.join(os.path.dirname(script_dir), clean_path)
+        if os.path.exists(parent_target):
+            return parent_target
+
+        # Check frontend/ directory
+        frontend_target = os.path.join(script_dir, 'frontend', clean_path)
+        if os.path.exists(frontend_target):
+            return frontend_target
+
+        # Check ../frontend/ directory
+        parent_frontend_target = os.path.join(os.path.dirname(script_dir), 'frontend', clean_path)
+        if os.path.exists(parent_frontend_target):
+            return parent_frontend_target
+            
+        return target_path
+
     def end_headers(self):
-        # Prevent caching for API requests
+        # Enable CORS for all local or external origins
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
         if self.path.startswith('/api/'):
             self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
             self.send_header('Pragma', 'no-cache')
             self.send_header('Expires', '0')
         super().end_headers()
+
+    def do_OPTIONS(self):
+        self.send_response(200, "ok")
+        self.end_headers()
 
     def do_GET(self):
         if self.path.startswith('/api/'):
@@ -763,13 +803,31 @@ if __name__ == '__main__':
     # Initialize the database file
     init_db()
     
-    # Configure and start server
-    handler = CustomHTTPRequestHandler
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("0.0.0.0", PORT), handler) as httpd:
-        print(f"Medicare full-stack backend running on port {PORT}...")
+    ports_to_try = [8080, 5000, 8000, 3000]
+    httpd = None
+    chosen_port = PORT
+
+    for p in ports_to_try:
         try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            print("\nShutting down backend...")
-            httpd.server_close()
+            socketserver.TCPServer.allow_reuse_address = True
+            httpd = socketserver.TCPServer(("0.0.0.0", p), CustomHTTPRequestHandler)
+            chosen_port = p
+            break
+        except OSError:
+            continue
+
+    if not httpd:
+        print("❌ Error: Could not bind to any port (8080, 5000, 8000, 3000). Ensure ports are free.")
+        sys.exit(1)
+
+    print("====================================================================")
+    print(" 🚀 MEDICINE REMINDER FULL-STACK SERVER IS RUNNING PERFECTLY!")
+    print(f" 👉 Open in Web Browser: http://localhost:{chosen_port}")
+    print(f" 👉 Alternative IP:      http://127.0.0.1:{chosen_port}")
+    print("====================================================================")
+
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nShutting down backend...")
+        httpd.server_close()
