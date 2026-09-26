@@ -6790,6 +6790,73 @@ class AegisAppController {
     }
   }
 
+  async linkPatientProfile() {
+    const inputEl = document.getElementById('cg-link-patient-input');
+    if (!inputEl) return;
+    const targetId = inputEl.value.trim();
+    if (!targetId) {
+      alert("Please enter a valid Patient Email or Mobile number!");
+      return;
+    }
+
+    try {
+      const active = stateStore.data.activePatient;
+      if (!active) return;
+
+      active.primaryDoctorId = targetId;
+
+      // Save updated primaryDoctorId to backend
+      await this.apiCall('/api/state/save', 'POST', {
+        userId: active.id,
+        profile: {
+          name: active.name,
+          primaryDoctorId: targetId
+        }
+      });
+
+      // Try searching for patient in db
+      let pSnapshot = await db.collection('users')
+        .where('role', '==', 'patient')
+        .where('email', '==', targetId.toLowerCase())
+        .get();
+      if (pSnapshot.empty) {
+        pSnapshot = await db.collection('users')
+          .where('role', '==', 'patient')
+          .where('email', '==', targetId)
+          .get();
+      }
+      if (pSnapshot.empty) {
+        pSnapshot = await db.collection('users')
+          .where('role', '==', 'patient')
+          .where('mobile', '==', targetId)
+          .get();
+      }
+
+      if (!pSnapshot.empty) {
+        const linkedPatient = pSnapshot.docs[0].data();
+        stateStore.data.linkedPatient = linkedPatient;
+
+        const pStateDoc = await db.collection('states').doc(linkedPatient.id).get();
+        if (pStateDoc.exists) {
+          const pState = pStateDoc.data();
+          stateStore.data.medicines = pState.medicines || [];
+          stateStore.data.appointments = pState.appointments || [];
+          stateStore.data.logs = pState.logs || [];
+          stateStore.data.linkedPatientSettings = pState.settings || {};
+          stateStore.data.healthLogs = pState.healthLogs || [];
+        }
+        stateStore.saveState();
+        this.renderCaregiverDashboard();
+        this.playSuccessConfetti();
+      } else {
+        alert("Patient link saved! If running locally or on server, reloading will refresh patient metrics.");
+        this.renderCaregiverDashboard();
+      }
+    } catch (err) {
+      alert("Error linking patient: " + err.message);
+    }
+  }
+
   triggerEmergencySOS(activate) {
     const modal = document.getElementById('sos-alert-modal');
     if (!modal) return;

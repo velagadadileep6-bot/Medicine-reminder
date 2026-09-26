@@ -200,6 +200,108 @@ def init_db():
     conn.close()
     print("Database initialized successfully.")
 
+def get_user_login_payload(cursor, user):
+    user_id = user['id']
+    role = user['role']
+    user_data = dict(user)
+    user_data.pop('password_hash', None)
+    user_data.pop('salt', None)
+    
+    # Medicines
+    cursor.execute('SELECT * FROM medicines WHERE user_id = ?', (user_id,))
+    meds = []
+    for med_row in cursor.fetchall():
+        med = dict(med_row)
+        med['times'] = json.loads(med['times']) if isinstance(med['times'], str) else med['times']
+        med['specificDays'] = json.loads(med['specific_days']) if med.get('specific_days') and isinstance(med['specific_days'], str) else []
+        meds.append(med)
+    
+    # Appointments
+    cursor.execute('SELECT * FROM appointments WHERE patient_id = ? OR doctor_id = ?', (user_id, user_id))
+    appts = [dict(r) for r in cursor.fetchall()]
+    
+    # Logs
+    cursor.execute('SELECT * FROM logs WHERE user_id = ?', (user_id,))
+    logs = [dict(r) for r in cursor.fetchall()]
+    
+    # Settings
+    cursor.execute('SELECT * FROM settings WHERE user_id = ?', (user_id,))
+    settings_row = cursor.fetchone()
+    set_data = dict(settings_row) if settings_row else {"theme": "dark", "lang": "en"}
+    
+    health_logs = []
+    linked_patient = None
+    linked_patient_settings = None
+
+    if role == 'caregiver' and user.get('primary_doctor_id'):
+        linked_identifier = str(user['primary_doctor_id']).strip().lower()
+        cursor.execute('SELECT * FROM users WHERE (LOWER(email) = ? OR mobile = ?) AND role = \'patient\'', (linked_identifier, linked_identifier))
+        p_row = cursor.fetchone()
+        if p_row:
+            p_dict = dict(p_row)
+            p_dict.pop('password_hash', None)
+            p_dict.pop('salt', None)
+            linked_patient = p_dict
+            p_id = linked_patient['id']
+            
+            cursor.execute('SELECT * FROM medicines WHERE user_id = ?', (p_id,))
+            meds = []
+            for med_row in cursor.fetchall():
+                med = dict(med_row)
+                med['times'] = json.loads(med['times']) if isinstance(med['times'], str) else med['times']
+                med['specificDays'] = json.loads(med['specific_days']) if med.get('specific_days') and isinstance(med['specific_days'], str) else []
+                meds.append(med)
+                
+            cursor.execute('SELECT * FROM appointments WHERE patient_id = ?', (p_id,))
+            appts = [dict(r) for r in cursor.fetchall()]
+            
+            cursor.execute('SELECT * FROM logs WHERE user_id = ?', (p_id,))
+            logs = [dict(r) for r in cursor.fetchall()]
+            
+            cursor.execute('SELECT * FROM settings WHERE user_id = ?', (p_id,))
+            s_row = cursor.fetchone()
+            linked_patient_settings = dict(s_row) if s_row else {"theme": "dark", "lang": "en"}
+            
+            cursor.execute('SELECT * FROM health_logs WHERE user_id = ?', (p_id,))
+            for h_row in cursor.fetchall():
+                h = dict(h_row)
+                health_logs.append({
+                    "id": h["id"],
+                    "timestamp": h["timestamp"],
+                    "date": h["date"],
+                    "time": h["time"],
+                    "bloodPressure": { "systolic": h["sys"], "diastolic": h["dia"] },
+                    "bloodSugar": { "value": h["sugar"], "type": h["sugar_type"] },
+                    "weight": h["weight"],
+                    "pulse": h["pulse"]
+                })
+    else:
+        cursor.execute('SELECT * FROM health_logs WHERE user_id = ?', (user_id,))
+        for h_row in cursor.fetchall():
+            h = dict(h_row)
+            health_logs.append({
+                "id": h["id"],
+                "timestamp": h["timestamp"],
+                "date": h["date"],
+                "time": h["time"],
+                "bloodPressure": { "systolic": h["sys"], "diastolic": h["dia"] },
+                "bloodSugar": { "value": h["sugar"], "type": h["sugar_type"] },
+                "weight": h["weight"],
+                "pulse": h["pulse"]
+            })
+
+    return {
+        "success": True,
+        "user": user_data,
+        "settings": set_data,
+        "medicines": meds,
+        "appointments": appts,
+        "logs": logs,
+        "healthLogs": health_logs,
+        "linkedPatient": linked_patient,
+        "linkedPatientSettings": linked_patient_settings
+    }
+
 class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     
     def log_message(self, format, *args):
@@ -508,7 +610,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             elif path == '/api/auth/login':
                 identifier = body.get('identifier', '').strip()
                 if '@' in identifier:
-                    identifier = identifier.lower()
+                    identifier = identifier.lower().strip()
                 password = body.get('password')
                 role = body.get('role', 'patient')
                 
@@ -518,31 +620,59 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     return
                 
                 print(f"[LOGIN DEBUG] Attempting login: identifier={identifier}, role={role}")
-                cursor.execute('SELECT * FROM users WHERE (email = ? OR mobile = ?) AND role = ?', (identifier, identifier, role))
+                cursor.execute('SELECT * FROM users WHERE (LOWER(email) = LOWER(?) OR mobile = ?) AND role = ?', (identifier, identifier, role))
                 row = cursor.fetchone()
+                if not row:
+                    # Fallback lookup without role filter
+                    cursor.execute('SELECT * FROM users WHERE LOWER(email) = LOWER(?) OR mobile = ?', (identifier, identifier))
+                    row = cursor.fetchone()
                 
                 if not row:
-                    print(f"[LOGIN DEBUG] No user found with identifier={identifier} and role={role}")
+                    print(f"[LOGIN DEBUG] No user found with identifier={identifier}")
                     self.send_json_response({"error": "Invalid email/mobile, password, or role!"}, 400)
                     return
                 
                 user = dict(row)
                 target_hash, _ = hash_password(password, user['salt'])
                 
-                print(f"[LOGIN DEBUG] Found user {user['id']}. Comparing hashes:")
-                print(f"[LOGIN DEBUG] DB Hash: {user['password_hash']}")
-                print(f"[LOGIN DEBUG] Calculated Hash: {target_hash}")
-                
                 if target_hash != user['password_hash']:
                     print(f"[LOGIN DEBUG] Hash mismatch for user {user['id']}!")
                     self.send_json_response({"error": "Invalid email/mobile, password, or role!"}, 400)
                     return
                 
-                print(f"[LOGIN DEBUG] Login successful for user {user['id']}")
+                payload = self.get_user_login_payload(cursor, user)
+                self.send_json_response(payload)
+
+            elif path == '/api/auth/google-login':
+                email = body.get('email', '').strip().lower()
+                name = body.get('name', 'User')
+                photo = body.get('photo')
+                role = body.get('role', 'patient')
                 
-                user_id = user['id']
-                user.pop('password_hash', None)
-                user.pop('salt', None)
+                if not email:
+                    self.send_json_response({"error": "Missing email from Google Sign-In"}, 400)
+                    return
+                
+                cursor.execute('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', (email,))
+                row = cursor.fetchone()
+                
+                if not row:
+                    # Auto-register new Google user
+                    user_id = f"{role}_{int(hashlib.md5(email.encode()).hexdigest(), 16) % 10000000}"
+                    pass_hash, salt = hash_password(os.urandom(8).hex())
+                    cursor.execute('''
+                        INSERT INTO users (id, name, role, email, mobile, password_hash, salt, photo)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (user_id, name, role, email, '', pass_hash, salt, photo))
+                    cursor.execute('INSERT INTO settings (user_id) VALUES (?)', (user_id,))
+                    conn.commit()
+                    
+                    cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+                    row = cursor.fetchone()
+                
+                user = dict(row)
+                payload = self.get_user_login_payload(cursor, user)
+                self.send_json_response(payload)
                 
                 # Load associated data
                 # Medicines
