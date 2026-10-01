@@ -4070,9 +4070,14 @@ class AegisAppController {
           else docCallBtn.classList.add('hide');
         }
         
+        // Sync Direct Switch Button Label
+        const directSwitchBtn = document.getElementById('direct-switch-role-btn');
+        const directSwitchLabel = document.getElementById('direct-switch-role-label');
+        if (directSwitchBtn) directSwitchBtn.classList.remove('hide');
+        if (directSwitchLabel) directSwitchLabel.textContent = 'Caregiver View';
+
         // Go to default patient view (Appointments or Dashboard)
         const targetTab = this.activeTab || 'tab-appointments';
-        // Make sure active tab is a valid patient tab
         if (targetTab === 'tab-doctor-dashboard' || targetTab === 'tab-admin-dashboard' || targetTab === 'tab-caregiver-dashboard') {
           this.activeTab = 'tab-appointments';
         }
@@ -4085,6 +4090,12 @@ class AegisAppController {
         if (adminTab) adminTab.classList.add('hide');
         if (caregiverTab) caregiverTab.classList.remove('hide');
         
+        // Sync Direct Switch Button Label
+        const directSwitchBtn = document.getElementById('direct-switch-role-btn');
+        const directSwitchLabel = document.getElementById('direct-switch-role-label');
+        if (directSwitchBtn) directSwitchBtn.classList.remove('hide');
+        if (directSwitchLabel) directSwitchLabel.textContent = 'Patient View';
+
         // Hide doctor call action for non-patients
         const docCallBtn = document.getElementById('doctor-call-btn');
         if (docCallBtn) docCallBtn.classList.add('hide');
@@ -4101,6 +4112,9 @@ class AegisAppController {
         if (adminTab) adminTab.classList.add('hide');
         if (caregiverTab) caregiverTab.classList.add('hide');
         
+        const directSwitchBtn = document.getElementById('direct-switch-role-btn');
+        if (directSwitchBtn) directSwitchBtn.classList.add('hide');
+
         // Hide doctor call action for non-patients
         const docCallBtn = document.getElementById('doctor-call-btn');
         if (docCallBtn) docCallBtn.classList.add('hide');
@@ -4117,6 +4131,9 @@ class AegisAppController {
         if (adminTab) adminTab.classList.remove('hide');
         if (caregiverTab) caregiverTab.classList.add('hide');
         
+        const directSwitchBtn = document.getElementById('direct-switch-role-btn');
+        if (directSwitchBtn) directSwitchBtn.classList.add('hide');
+
         // Hide doctor call action for non-patients
         const docCallBtn = document.getElementById('doctor-call-btn');
         if (docCallBtn) docCallBtn.classList.add('hide');
@@ -4132,6 +4149,9 @@ class AegisAppController {
     } else {
       appShell.classList.add('hide');
       authPortal.classList.remove('hide');
+      
+      const directSwitchBtn = document.getElementById('direct-switch-role-btn');
+      if (directSwitchBtn) directSwitchBtn.classList.add('hide');
       
       // Hide floating SOS button when logged out
       const sosBtn = document.getElementById('sos-btn');
@@ -6855,6 +6875,42 @@ class AegisAppController {
     } catch (err) {
       alert("Error linking patient: " + err.message);
     }
+  }
+
+  handleDirectRoleSwitch() {
+    const active = stateStore.data.activePatient;
+    if (!active) return;
+
+    const btnLabel = document.getElementById('direct-switch-role-label');
+    const caregiverTab = document.getElementById('nav-caregiver-tab');
+    const patientTabs = document.querySelectorAll('.nav-tab[data-tab="tab-dashboard"], .nav-tab[data-tab="tab-cabinet"], .nav-tab[data-tab="tab-analytics"], .nav-tab[data-tab="tab-health"], .nav-tab[data-tab="tab-appointments"]');
+
+    if (this.activeTab === 'tab-caregiver-dashboard') {
+      // Switch back to Patient View
+      patientTabs.forEach(t => t.classList.remove('hide'));
+      if (caregiverTab) caregiverTab.classList.add('hide');
+
+      this.activeTab = 'tab-appointments';
+      this.switchTab('tab-appointments');
+      this.renderDailySchedule();
+      this.renderCabinet();
+      this.renderAnalytics();
+      this.renderAppointments();
+
+      if (btnLabel) btnLabel.textContent = 'Caregiver View';
+    } else {
+      // Switch to Caregiver View
+      patientTabs.forEach(t => t.classList.add('hide'));
+      if (caregiverTab) caregiverTab.classList.remove('hide');
+
+      this.activeTab = 'tab-caregiver-dashboard';
+      this.switchTab('tab-caregiver-dashboard');
+      this.renderCaregiverDashboard();
+
+      if (btnLabel) btnLabel.textContent = 'Patient View';
+    }
+
+    this.playSuccessConfetti();
   }
 
   triggerEmergencySOS(activate) {
