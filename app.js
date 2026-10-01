@@ -2078,6 +2078,88 @@ class AegisAppController {
         linkedPatientSettings: linkedPatientSettings
       };
     }
+
+    if (path === '/api/auth/google-login') {
+      const { email, name, photo, role } = data;
+      const iden = (email || '').trim().toLowerCase();
+      
+      let user = dbData.users.find(u => (u.email || '').toLowerCase() === iden);
+      if (!user) {
+        // Auto-register new Google user in LocalDB
+        const userId = `${role}_` + Math.floor(Math.random() * 10000000);
+        user = {
+          id: userId,
+          name: name || iden.split('@')[0],
+          role: role,
+          email: iden,
+          mobile: '',
+          passwordHash: '',
+          salt: '',
+          age: null,
+          gender: null,
+          blood: null,
+          address: '',
+          photo: photo || null,
+          emergency: null,
+          primaryDoctorId: null,
+          doctorPhone: null,
+          adherence: 0,
+          streak: 0
+        };
+        dbData.users.push(user);
+        dbData.states[userId] = {
+          medicines: [],
+          appointments: [],
+          logs: [],
+          settings: { theme: 'dark', fontSize: 'normal', speechAlerts: true, highContrast: false, lang: 'en', doctorPhone: '' },
+          healthLogs: []
+        };
+        localStorage.setItem('aegis_local_db', JSON.stringify(dbData));
+      }
+      
+      const userRole = user.role || role;
+      const userState = dbData.states[user.id] || { medicines: [], appointments: [], logs: [], settings: { theme: 'dark', lang: 'en' }, healthLogs: [] };
+      
+      let medicines = userState.medicines || [];
+      let appointments = userState.appointments || [];
+      let logs = userState.logs || [];
+      let settings = userState.settings || { theme: 'dark', lang: 'en' };
+      let healthLogs = userState.healthLogs || [];
+      let linkedPatient = null;
+      let linkedPatientSettings = null;
+      
+      if (userRole === 'caregiver' && user.primaryDoctorId) {
+        const linkedId = String(user.primaryDoctorId).trim().toLowerCase();
+        const p = dbData.users.find(u => ((u.email || '').toLowerCase() === linkedId || (u.mobile || '').trim() === linkedId) && u.role === 'patient');
+        if (p) {
+          linkedPatient = { ...p };
+          delete linkedPatient.passwordHash;
+          delete linkedPatient.salt;
+          const pState = dbData.states[p.id] || {};
+          medicines = pState.medicines || [];
+          appointments = pState.appointments || [];
+          logs = pState.logs || [];
+          linkedPatientSettings = pState.settings || {};
+          healthLogs = pState.healthLogs || [];
+        }
+      }
+      
+      const userRes = { ...user };
+      delete userRes.passwordHash;
+      delete userRes.salt;
+      
+      return {
+        success: true,
+        user: userRes,
+        settings: settings,
+        medicines: medicines,
+        appointments: appointments,
+        logs: logs,
+        healthLogs: healthLogs,
+        linkedPatient: linkedPatient,
+        linkedPatientSettings: linkedPatientSettings
+      };
+    }
     
     if (path === '/api/patient-details') {
       const patientId = query.get('id');
