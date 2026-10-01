@@ -842,24 +842,21 @@
            TAB 4B: CAREGIVER LIVE MONITORING DASHBOARD
            ========================================== -->
       <section id="tab-caregiver-dashboard" class="tab-panel">
-        <!-- ASSIGNED LINKED PATIENTS CARDS GRID -->
-        <div id="cg-assigned-patients-section" style="width: 100%; margin-bottom: 1.25rem;"></div>
-
-        <!-- DUAL ACCOUNT SUMMARY: CAREGIVER PROFILE & LINKED PATIENT PROFILE -->
-        <div id="cg-patient-card-header" class="dashboard-card hide" style="flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(30, 41, 59, 0.75); border: 1px solid var(--glass-border); width: 100%;">
+        <!-- DUAL ACCOUNT SUMMARY: CAREGIVER PROFILE & LINKED PATIENT PROFILE (ALWAYS VISIBLE) -->
+        <div id="cg-patient-card-header" class="dashboard-card" style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(30, 41, 59, 0.85); border: 1.5px solid var(--teal-color); width: 100%; box-shadow: var(--shadow-md);">
           
           <!-- Caregiver Header Info & Direct Fast Switch Buttons -->
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.75rem; width: 100%;">
             <div style="display: flex; align-items: center; gap: 0.6rem;">
-              <span style="font-size: 1.4rem;">👨‍👩‍👧</span>
+              <span style="font-size: 1.5rem;">👨‍👩‍👧</span>
               <div>
-                <span style="font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: var(--teal-color); letter-spacing: 0.5px;">Logged-In Caregiver / Guardian</span>
-                <h3 id="cg-account-name" style="margin: 0; font-size: 1.1rem; font-weight: 700;">Caregiver Account</h3>
+                <span style="font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: var(--teal-color); letter-spacing: 0.5px;">Logged-In Caregiver / Guardian Account</span>
+                <h3 id="cg-account-name" style="margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-primary);">Caregiver Account</h3>
               </div>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
               <button class="btn btn-sm btn-teal" style="font-weight: 700; display: flex; align-items: center; gap: 0.3rem;" onclick="appController.handleDirectRoleSwitch()">
-                👤 <span>Open Patient Dashboard</span>
+                👤 <span>Open Patient View</span>
               </button>
               <button id="caregiver-doctor-call-btn" class="btn btn-xs btn-glass text-teal" style="border-color: var(--teal-color); font-weight:700; padding: 0.4rem 0.75rem;">
                 📞 <span data-i18n="callDoctor">Call Doctor</span>
@@ -869,16 +866,16 @@
 
           <!-- Monitored Patient Detailed Profile -->
           <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; width: 100%;">
-            <div class="cg-patient-avatar" style="width: 3.2rem; height: 3.2rem; border-radius: 50%; overflow: hidden; background: rgba(45, 212, 191, 0.1); border: 1px solid var(--teal-color); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-              <span id="cg-patient-pic-placeholder" style="font-size: 1.3rem;">👤</span>
+            <div class="cg-patient-avatar" style="width: 3.5rem; height: 3.5rem; border-radius: 50%; overflow: hidden; background: rgba(45, 212, 191, 0.15); border: 2px solid var(--teal-color); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <span id="cg-patient-pic-placeholder" style="font-size: 1.4rem;">👤</span>
               <img id="cg-patient-pic" src="" class="hide" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div style="flex: 1;">
               <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                <span style="font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px;">Monitored Patient Profile</span>
+                <span style="font-size: 0.65rem; text-transform: uppercase; font-weight: 700; color: var(--teal-color); letter-spacing: 0.5px;">Active Monitored Patient Profile</span>
                 <span class="badge badge-normal" style="font-size: 0.65rem;">Active Realtime Link</span>
               </div>
-              <h2 id="cg-patient-name" style="margin: 0.15rem 0; font-size: 1.35rem; font-weight: 700;">Patient Name</h2>
+              <h2 id="cg-patient-name" style="margin: 0.15rem 0; font-size: 1.35rem; font-weight: 700; color: var(--text-primary);">Patient Name</h2>
               <div class="cg-patient-metadata" style="margin-top: 0.25rem; display: flex; gap: 1.25rem; flex-wrap: wrap; font-size: 0.82rem; color: var(--text-muted);">
                 <span>Age: <strong id="cg-patient-age" style="color: var(--text-primary);">--</strong></span>
                 <span>Blood Group: <strong id="cg-patient-blood" style="color: var(--rose-color);">--</strong></span>
@@ -890,13 +887,16 @@
 
           <!-- Quick Link Patient Bar -->
           <div style="margin-top: 0.25rem; padding-top: 0.6rem; border-top: 1px dashed var(--glass-border); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; width: 100%;">
-            <span style="font-size: 0.75rem; color: var(--text-muted);">🔗 <strong>Monitored Patient Account:</strong> <span id="cg-linked-email-display" style="color: var(--teal-color); font-weight: 600;">patient@medicare.com</span></span>
-            <div style="display: flex; gap: 0.4rem; flex: 1; max-width: 340px;">
+            <span style="font-size: 0.78rem; color: var(--text-muted);">🔗 <strong>Monitored Patient Account:</strong> <span id="cg-linked-email-display" style="color: var(--teal-color); font-weight: 700;">patient@medicare.com</span></span>
+            <div style="display: flex; gap: 0.4rem; flex: 1; max-width: 360px;">
               <input type="text" id="cg-quick-link-input" class="form-control-sm" placeholder="Enter Patient Email / Mobile..." style="flex: 1; padding: 0.35rem 0.6rem; font-size: 0.8rem; background: var(--bg-primary);">
               <button type="button" class="btn btn-xs btn-teal" style="font-weight: 700; padding: 0.35rem 0.75rem;" onclick="appController.handleQuickPatientLink()">Link Patient</button>
             </div>
           </div>
         </div>
+
+        <!-- ASSIGNED LINKED PATIENTS CARDS GRID -->
+        <div id="cg-assigned-patients-section" style="width: 100%; margin-bottom: 1.25rem;"></div>
 
         <div id="cg-no-patient-view" class="dashboard-card cg-no-patient-state">
           <span>📭</span>
