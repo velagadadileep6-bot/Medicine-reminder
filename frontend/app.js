@@ -6546,8 +6546,15 @@ class AegisAppController {
     if (dataGrid) dataGrid.classList.remove('hide');
     
     const lp = stateStore.data.linkedPatient;
+    const activeCaregiver = stateStore.data.activePatient;
     
-    // Fill Patient Header Info
+    // Fill Caregiver Header Info
+    const cgAccountName = document.getElementById('cg-account-name');
+    if (cgAccountName && activeCaregiver) {
+      cgAccountName.textContent = `${activeCaregiver.name} (${activeCaregiver.email})`;
+    }
+
+    // Fill Monitored Patient Header Info
     const cgPatName = document.getElementById('cg-patient-name');
     const cgPatAge = document.getElementById('cg-patient-age');
     const cgPatBlood = document.getElementById('cg-patient-blood');
