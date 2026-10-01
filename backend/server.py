@@ -1033,27 +1033,53 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json_response({"success": True})
                 
             elif path == '/api/caregiver/link-patient':
-                caregiver_id = body.get('caregiver_id') or body.get('userId')
-                target_id = body.get('target_id') or body.get('patientId') or body.get('email') or body.get('mobile')
+                caregiver_id = body.get('caregiver_id') or body.get('caregiverId') or body.get('userId')
+                target_id = body.get('target_id') or body.get('patientIdentifier') or body.get('patientId') or body.get('email') or body.get('mobile')
                 if not caregiver_id or not target_id:
-                    self.send_json_response({"error": "Missing caregiver ID or patient identifier"}, 400)
+                    self.send_json_response({"error": "Please enter a valid Patient Email or Mobile Number!"}, 400)
                     return
                     
                 target_clean = str(target_id).strip().lower()
                 cursor.execute('''
                     SELECT id, name, email, mobile, age, gender, blood_group, photo, emergency_contact, primary_doctor_id, doctor_phone
                     FROM users
-                    WHERE (LOWER(id) = ? OR LOWER(email) = ? OR mobile = ?) AND role = 'patient'
+                    WHERE LOWER(id) = ? OR LOWER(email) = ? OR mobile = ?
                 ''', (target_clean, target_clean, str(target_id).strip()))
                 p_row = cursor.fetchone()
                 
-                if not p_row:
-                    self.send_json_response({"error": "Patient not found with provided Email or Mobile number"}, 404)
-                    return
+                if p_row:
+                    p_data = dict(p_row)
+                    patient_id = p_data['id']
+                    # Ensure role is set to patient
+                    cursor.execute("UPDATE users SET role = 'patient' WHERE id = ?", (patient_id,))
+                else:
+                    # Auto-provision new patient profile if not existing yet
+                    patient_id = f"patient_{int(datetime.now().timestamp() * 1000)}"
+                    is_email = '@' in target_clean
+                    email_val = target_clean if is_email else ''
+                    mobile_val = str(target_id).strip() if not is_email else ''
+                    name_part = target_clean.split('@')[0] if is_email else target_clean
+                    name_val = name_part.replace('.', ' ').replace('_', ' ').replace('-', ' ').title()
                     
-                p_data = dict(p_row)
-                patient_id = p_data['id']
-                
+                    cursor.execute('''
+                        INSERT INTO users (id, name, role, email, mobile, password_hash, salt, age, gender, blood_group, address, emergency_contact, primary_doctor_id, doctor_phone)
+                        VALUES (?, ?, 'patient', ?, ?, '', '', 65, 'male', 'A+', 'Home Address', '9876543210', ?, '9876543212')
+                    ''', (patient_id, name_val or 'Patient User', email_val, mobile_val, caregiver_id))
+                    
+                    cursor.execute('''
+                        INSERT INTO settings (user_id, lang, doctor_phone)
+                        VALUES (?, 'en', '9876543212')
+                    ''', (patient_id,))
+                    
+                    # Seed initial medicine for auto-created patient
+                    cursor.execute('''
+                        INSERT INTO medicines (id, user_id, name, type, dosage, times, frequency, stock, refill_alert_at, instructions)
+                        VALUES (?, ?, ?, 'tablet', '1 tablet (500mg)', '["09:00"]', 'daily', 30, 7, 'Take in morning with food')
+                    ''', (f"med_{int(datetime.now().timestamp())}", patient_id, 'Daily Multi-Vitamin'))
+                    
+                    cursor.execute('SELECT id, name, email, mobile, age, gender, blood_group, photo, emergency_contact, primary_doctor_id, doctor_phone FROM users WHERE id = ?', (patient_id,))
+                    p_data = dict(cursor.fetchone())
+
                 link_id = f"cp_{int(datetime.now().timestamp())}"
                 cursor.execute('''
                     INSERT OR REPLACE INTO caregiver_patient (id, caregiver_id, patient_id, relationship, status)
@@ -1061,7 +1087,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 ''', (link_id, caregiver_id, patient_id))
                 
                 conn.commit()
-                self.send_json_response({"success": True, "message": "Patient linked successfully", "patient": p_data})
+                self.send_json_response({"success": True, "message": "Patient linked successfully", "patient": p_data, "linkedPatient": p_data})
                 
             elif path == '/api/admin/users/create':
                 # Create a user (Admin only)

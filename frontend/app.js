@@ -2245,27 +2245,78 @@ class AegisAppController {
     }
 
     if (path === '/api/caregiver/link-patient') {
-      const cgId = data?.caregiver_id || data?.userId;
-      const targetId = (data?.target_id || data?.patientId || data?.email || data?.mobile || '').toString().trim().toLowerCase();
+      const cgId = data?.caregiver_id || data?.caregiverId || data?.userId;
+      const targetId = (data?.target_id || data?.patientIdentifier || data?.patientId || data?.email || data?.mobile || '').toString().trim().toLowerCase();
 
-      if (!cgId || !targetId) throw new Error("Missing parameters");
-
-      const targetPatient = dbData.users.find(u =>
-        u.role === 'patient' && (u.id.toLowerCase() === targetId || (u.email || '').toLowerCase() === targetId || u.mobile === targetId)
-      );
-
-      if (!targetPatient) {
-        throw new Error("Patient not found with provided Email or Mobile number");
-      }
+      if (!cgId || !targetId) throw new Error("Please enter a valid Patient Email or Mobile Number!");
 
       const cgUser = dbData.users.find(u => u.id === cgId);
+
+      let targetPatient = dbData.users.find(u =>
+        u.id.toLowerCase() === targetId ||
+        (u.email || '').toLowerCase().trim() === targetId ||
+        (u.mobile || '').trim() === targetId
+      );
+
+      if (targetPatient) {
+        targetPatient.role = 'patient';
+      } else {
+        const newPatientId = 'patient_' + Math.floor(Math.random() * 10000000);
+        const isEmail = targetId.includes('@');
+        const namePart = isEmail ? targetId.split('@')[0] : targetId;
+        const formattedName = namePart.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+        targetPatient = {
+          id: newPatientId,
+          name: formattedName || 'Patient User',
+          role: 'patient',
+          email: isEmail ? targetId : '',
+          mobile: isEmail ? '' : targetId,
+          passwordHash: '',
+          salt: '',
+          age: 65,
+          gender: 'male',
+          blood: 'A+',
+          address: 'Home Address',
+          photo: null,
+          emergency: '9876543210',
+          primaryDoctorId: cgId,
+          doctorPhone: '9876543212',
+          adherence: 100,
+          streak: 0
+        };
+
+        dbData.users.push(targetPatient);
+        dbData.states[newPatientId] = {
+          medicines: [
+            { id: 'med_auto_1', name: 'Daily Multi-Vitamin', type: 'tablet', dosage: '1 tablet (500mg)', times: ['09:00'], frequency: 'daily', stock: 30, refillAlertAt: 7, color: '#0d9488', instructions: 'Take in morning with food' }
+          ],
+          appointments: [],
+          logs: [],
+          settings: { theme: 'dark', fontSize: 'normal', speechAlerts: true, highContrast: false, lang: 'en', doctorPhone: '' },
+          healthLogs: []
+        };
+      }
+
       if (cgUser) {
         cgUser.primaryDoctorId = targetPatient.id;
       }
       targetPatient.primaryDoctorId = cgId;
+
       localStorage.setItem('aegis_local_db', JSON.stringify(dbData));
 
-      return { success: true, message: "Patient linked successfully", patient: targetPatient };
+      const pState = dbData.states[targetPatient.id] || { medicines: [], appointments: [], logs: [], settings: {}, healthLogs: [] };
+
+      return {
+        success: true,
+        message: "Patient linked successfully",
+        patient: targetPatient,
+        linkedPatient: targetPatient,
+        medicines: pState.medicines || [],
+        appointments: pState.appointments || [],
+        logs: pState.logs || [],
+        healthLogs: pState.healthLogs || []
+      };
     }
 
     if (path === '/api/patient-details') {
@@ -2342,33 +2393,6 @@ class AegisAppController {
       
       localStorage.setItem('aegis_local_db', JSON.stringify(dbData));
       return { success: true };
-    }
-
-    if (path === '/api/caregiver/link-patient') {
-      const { caregiverId, patientIdentifier } = data;
-      const patient = dbData.users.find(u => (u.email === patientIdentifier || u.mobile === patientIdentifier) && u.role === 'patient');
-      if (!patient) {
-        throw new Error("Patient profile not found! Please check the email/mobile number.");
-      }
-      
-      const caregiverIdx = dbData.users.findIndex(u => u.id === caregiverId);
-      if (caregiverIdx > -1) {
-        dbData.users[caregiverIdx].primaryDoctorId = patientIdentifier;
-      }
-      
-      localStorage.setItem('aegis_local_db', JSON.stringify(dbData));
-      
-      const pState = dbData.states[patient.id] || { medicines: [], appointments: [], logs: [], settings: { theme: 'dark', lang: 'en' }, healthLogs: [] };
-      
-      return {
-        success: true,
-        linkedPatient: { ...patient },
-        medicines: pState.medicines || [],
-        appointments: pState.appointments || [],
-        logs: pState.logs || [],
-        linkedPatientSettings: pState.settings || {},
-        healthLogs: pState.healthLogs || []
-      };
     }
     
     throw new Error("Endpoint not supported in LocalDB fallback!");
@@ -2793,34 +2817,66 @@ class AegisAppController {
     }
 
     if (path === '/api/caregiver/link-patient') {
-      const { caregiverId, patientIdentifier } = data;
-      
-      let pSnapshot = await db.collection('users')
-        .where('role', '==', 'patient')
-        .where('email', '==', patientIdentifier)
-        .get();
+      const cgId = data?.caregiver_id || data?.caregiverId || data?.userId;
+      const targetId = (data?.target_id || data?.patientIdentifier || data?.patientId || data?.email || data?.mobile || '').toString().trim().toLowerCase();
+
+      if (!cgId || !targetId) throw new Error("Please enter a valid Patient Email or Mobile Number!");
+
+      let pSnapshot = await db.collection('users').where('email', '==', targetId).get();
       if (pSnapshot.empty) {
-        pSnapshot = await db.collection('users')
-          .where('role', '==', 'patient')
-          .where('mobile', '==', patientIdentifier)
-          .get();
+        pSnapshot = await db.collection('users').where('mobile', '==', targetId).get();
       }
-      
       if (pSnapshot.empty) {
-        throw new Error("Patient profile not found! Please check the email/mobile number.");
+        pSnapshot = await db.collection('users').where('id', '==', targetId).get();
       }
-      
-      const patient = pSnapshot.docs[0].data();
-      
-      // Update caregiver's patient link field
-      await db.collection('users').doc(caregiverId).update({
-        primaryDoctorId: patientIdentifier
-      });
-      
-      // Fetch patient state
+
+      let patient;
+      if (!pSnapshot.empty) {
+        patient = pSnapshot.docs[0].data();
+        patient.role = 'patient';
+        await db.collection('users').doc(patient.id).update({ role: 'patient' });
+      } else {
+        // Auto-provision patient in Firestore if not existing yet
+        const newPatientId = 'patient_' + Math.floor(Math.random() * 10000000);
+        const isEmail = targetId.includes('@');
+        const namePart = isEmail ? targetId.split('@')[0] : targetId;
+        const formattedName = namePart.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+        patient = {
+          id: newPatientId,
+          name: formattedName || 'Patient User',
+          role: 'patient',
+          email: isEmail ? targetId : '',
+          mobile: isEmail ? '' : targetId,
+          age: 65,
+          gender: 'male',
+          blood: 'A+',
+          address: 'Home Address',
+          photo: null,
+          emergency: '9876543210',
+          primaryDoctorId: cgId,
+          doctorPhone: '9876543212',
+          adherence: 100,
+          streak: 0
+        };
+
+        await db.collection('users').doc(newPatientId).set(patient);
+        await db.collection('states').doc(newPatientId).set({
+          medicines: [
+            { id: 'med_auto_1', name: 'Daily Multi-Vitamin', type: 'tablet', dosage: '1 tablet (500mg)', times: ['09:00'], frequency: 'daily', stock: 30, refillAlertAt: 7, color: '#0d9488', instructions: 'Take in morning with food' }
+          ],
+          appointments: [],
+          logs: [],
+          settings: { theme: 'dark', fontSize: 'normal', speechAlerts: true, highContrast: false, lang: 'en', doctorPhone: '' },
+          healthLogs: []
+        });
+      }
+
+      await db.collection('users').doc(cgId).update({ primaryDoctorId: patient.id });
+
       const pStateDoc = await db.collection('states').doc(patient.id).get();
       let medicines = [], appointments = [], logs = [], linkedPatientSettings = {}, healthLogs = [];
-      
+
       if (pStateDoc.exists) {
         const pState = pStateDoc.data();
         medicines = pState.medicines || [];
@@ -2829,9 +2885,10 @@ class AegisAppController {
         linkedPatientSettings = pState.settings || {};
         healthLogs = pState.healthLogs || [];
       }
-      
+
       return {
         success: true,
+        patient: patient,
         linkedPatient: patient,
         medicines,
         appointments,
@@ -7501,45 +7558,6 @@ class AegisAppController {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
       loginForm.dispatchEvent(new Event('submit'));
-    }
-  }
-
-  // Link caregiver profile to a patient's details
-  async linkPatientProfile() {
-    const active = stateStore.data.activePatient;
-    if (!active) return;
-    
-    const inputVal = document.getElementById('cg-link-patient-input').value.trim();
-    if (!inputVal) {
-      alert("Please enter patient Email or Mobile Number!");
-      return;
-    }
-    const patientIdentifier = inputVal.includes('@') ? inputVal.toLowerCase() : inputVal;
-    
-    try {
-      const result = await this.apiCall('/api/caregiver/link-patient', 'POST', {
-        caregiverId: active.id,
-        patientIdentifier: patientIdentifier
-      });
-      
-      if (result.success) {
-        // Update local caregiver document structure
-        stateStore.data.activePatient.primaryDoctorId = patientIdentifier;
-        stateStore.data.medicines = result.medicines || [];
-        stateStore.data.appointments = result.appointments || [];
-        stateStore.data.logs = result.logs || [];
-        stateStore.data.healthLogs = result.healthLogs || [];
-        stateStore.data.linkedPatient = result.linkedPatient || null;
-        stateStore.data.linkedPatientSettings = result.linkedPatientSettings || null;
-        
-        stateStore.saveState();
-        this.renderCaregiverDashboard();
-        
-        alert("Patient successfully linked!");
-      }
-    } catch (err) {
-      console.error("Failed to link patient:", err);
-      alert(err.message);
     }
   }
 }
