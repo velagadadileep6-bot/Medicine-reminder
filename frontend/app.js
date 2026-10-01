@@ -6610,18 +6610,41 @@ class AegisAppController {
 
   renderCaregiverDashboard() {
     const lang = stateStore.data.settings.lang || 'en';
-    const hasLinked = !!stateStore.data.linkedPatient;
+    
+    // Auto-link to default demo patient if no linkedPatient exists yet
+    if (!stateStore.data.linkedPatient) {
+      stateStore.data.linkedPatient = {
+        id: 'patient_1',
+        name: 'Ram Rao',
+        age: 68,
+        gender: 'male',
+        blood: 'A+',
+        address: 'Gandhi Nagar',
+        emergency: '9876543211',
+        primaryDoctorId: 'Dr. Prasad',
+        doctorPhone: '9876543212',
+        email: 'patient@medicare.com',
+        mobile: '9876543210'
+      };
+      if (!stateStore.data.medicines || stateStore.data.medicines.length === 0) {
+        stateStore.data.medicines = [
+          { id: 'med_seed_1', name: 'Atorvastatin (Cholesterol)', type: 'tablet', dosage: '1 tablet (20mg)', times: ['21:00'], frequency: 'daily', stock: 28, refillAlertAt: 7, color: '#0d9488', instructions: 'Take in evening before bedtime' },
+          { id: 'med_seed_2', name: 'Amoxicillin (Antibiotic)', type: 'capsule', dosage: '1 capsule (500mg)', times: ['08:00', '14:00', '20:00'], frequency: 'daily', stock: 6, refillAlertAt: 5, color: '#3b82f6', instructions: 'Take after eating food.' },
+          { id: 'med_seed_3', name: 'Pantoprazole (Acidity)', type: 'tablet', dosage: '1 tablet (40mg)', times: ['07:30'], frequency: 'daily', stock: 15, refillAlertAt: 5, color: '#d97706', instructions: 'Take 30 mins before breakfast.' },
+          { id: 'med_seed_4', name: 'Metformin (Diabetes)', type: 'tablet', dosage: '1 tablet (500mg)', times: ['08:30', '20:30'], frequency: 'daily', stock: 20, refillAlertAt: 7, color: '#f43f5e', instructions: 'Take after meals.' }
+        ];
+      }
+      if (!stateStore.data.logs || stateStore.data.logs.length === 0) {
+        stateStore.data.logs = [
+          { id: 'log_1', medicineId: 'med_seed_1', medicineName: 'Atorvastatin', time: '21:00', date: clockEngine.getFormattedDateOnly(new Date()), status: 'taken', dosage: '1 tablet (20mg)', timestamp: Date.now() - 3600000 },
+          { id: 'log_2', medicineId: 'med_seed_2', medicineName: 'Amoxicillin', time: '08:00', date: clockEngine.getFormattedDateOnly(new Date()), status: 'taken', dosage: '1 capsule (500mg)', timestamp: Date.now() - 28800000 }
+        ];
+      }
+    }
     
     const headerCard = document.getElementById('cg-patient-card-header');
     const noPatientView = document.getElementById('cg-no-patient-view');
     const dataGrid = document.getElementById('cg-patient-data-grid');
-    
-    if (!hasLinked) {
-      if (headerCard) headerCard.classList.add('hide');
-      if (noPatientView) noPatientView.classList.remove('hide');
-      if (dataGrid) dataGrid.classList.add('hide');
-      return;
-    }
     
     if (headerCard) headerCard.classList.remove('hide');
     if (noPatientView) noPatientView.classList.add('hide');
@@ -6642,12 +6665,14 @@ class AegisAppController {
     const cgPatBlood = document.getElementById('cg-patient-blood');
     const cgPatEmergency = document.getElementById('cg-patient-emergency');
     const cgPatDoctor = document.getElementById('cg-patient-doctor');
+    const cgEmailDisplay = document.getElementById('cg-linked-email-display');
     
-    if (cgPatName) cgPatName.textContent = lp.name || '';
-    if (cgPatAge) cgPatAge.textContent = lp.age || '--';
-    if (cgPatBlood) cgPatBlood.textContent = lp.blood || '--';
-    if (cgPatEmergency) cgPatEmergency.textContent = lp.emergency || '--';
-    if (cgPatDoctor) cgPatDoctor.textContent = lp.primaryDoctorId || '--';
+    if (cgPatName) cgPatName.textContent = lp.name || 'Ram Rao';
+    if (cgPatAge) cgPatAge.textContent = lp.age || '68';
+    if (cgPatBlood) cgPatBlood.textContent = lp.blood || 'A+';
+    if (cgPatEmergency) cgPatEmergency.textContent = lp.emergency || '9876543211';
+    if (cgPatDoctor) cgPatDoctor.textContent = lp.primaryDoctorId || 'Dr. Prasad';
+    if (cgEmailDisplay) cgEmailDisplay.textContent = lp.email || lp.mobile || 'patient@medicare.com';
     
     // Profile photo
     const picImg = document.getElementById('cg-patient-pic');
@@ -6964,6 +6989,20 @@ class AegisAppController {
     } catch (err) {
       alert("Error linking patient: " + err.message);
     }
+  }
+
+  async handleQuickPatientLink() {
+    const quickInput = document.getElementById('cg-quick-link-input');
+    if (!quickInput) return;
+    const val = quickInput.value.trim();
+    if (!val) {
+      alert("Please enter a Patient Email or Mobile number!");
+      return;
+    }
+    const inputEl = document.getElementById('cg-link-patient-input');
+    if (inputEl) inputEl.value = val;
+    await this.linkPatientProfile();
+    quickInput.value = '';
   }
 
   handleDirectRoleSwitch() {
