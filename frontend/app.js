@@ -2159,8 +2159,115 @@ class AegisAppController {
         linkedPatient: linkedPatient,
         linkedPatientSettings: linkedPatientSettings
       };
+    if (path === '/api/caregiver/patients') {
+      const cgId = query.get('caregiver_id') || query.get('userId');
+      if (!cgId) throw new Error("Missing caregiver ID");
+      
+      const cgUser = dbData.users.find(u => u.id === cgId);
+      const patients = [];
+      const todayStr = new Date().toISOString().split('T')[0];
+      
+      const linkedUsers = dbData.users.filter(u => {
+        if (u.role !== 'patient') return false;
+        if (u.primaryDoctorId === cgId || u.primaryDoctorId === cgUser?.email || u.primaryDoctorId === cgUser?.mobile) return true;
+        if (cgUser?.primaryDoctorId === u.id || cgUser?.primaryDoctorId === u.email || cgUser?.primaryDoctorId === u.mobile) return true;
+        if (cgId === 'caregiver_1' && u.id === 'patient_1') return true;
+        return false;
+      });
+
+      for (const p of linkedUsers) {
+        const pState = dbData.states[p.id] || { medicines: [], logs: [], healthLogs: [], appointments: [] };
+        const meds = pState.medicines || [];
+        const logs = pState.logs || [];
+        
+        const todayLogs = logs.filter(l => l.date === todayStr);
+        const takenCount = todayLogs.filter(l => l.status === 'taken').length;
+        const missedCount = todayLogs.filter(l => l.status === 'missed' || l.status === 'skipped').length;
+        
+        let totalDoses = 0;
+        meds.forEach(m => {
+          totalDoses += Array.isArray(m.times) ? m.times.length : 1;
+        });
+        const pendingCount = Math.max(0, totalDoses - (takenCount + missedCount));
+        
+        const totalLogged = logs.length;
+        const totalTaken = logs.filter(l => l.status === 'taken').length;
+        const adherencePct = totalLogged > 0 ? Math.round((totalTaken / totalLogged) * 100) : 100;
+        
+        patients.push({
+          ...p,
+          todayMedicines: totalDoses,
+          takenDoses: takenCount,
+          missedDoses: missedCount,
+          pendingDoses: pendingCount,
+          adherencePct: adherencePct,
+          medicinesCount: meds.length
+        });
+      }
+
+      return { success: true, patients: patients };
     }
-    
+
+    if (path === '/api/caregiver/patient-detail') {
+      const cgId = query.get('caregiver_id') || query.get('userId');
+      const patientId = query.get('patient_id') || query.get('id');
+      if (!cgId || !patientId) throw new Error("Missing parameters");
+
+      const cgUser = dbData.users.find(u => u.id === cgId);
+      const pUser = dbData.users.find(u => u.id === patientId);
+
+      if (!pUser) throw new Error("Patient not found");
+
+      // SECURITY AUTHORIZATION CHECK: verify caregiver is linked to requested patient
+      const isLinked = (cgId === 'admin_1') ||
+        (cgId === 'caregiver_1' && patientId === 'patient_1') ||
+        (pUser.primaryDoctorId === cgId || pUser.primaryDoctorId === cgUser?.email || pUser.primaryDoctorId === cgUser?.mobile) ||
+        (cgUser?.primaryDoctorId === pUser.id || cgUser?.primaryDoctorId === pUser.email || cgUser?.primaryDoctorId === pUser.mobile);
+
+      if (!isLinked) {
+        throw new Error("403 Forbidden: Unauthorized access to patient data.");
+      }
+
+      const pState = dbData.states[patientId] || { medicines: [], logs: [], healthLogs: [], appointments: [] };
+
+      const pRes = { ...pUser };
+      delete pRes.passwordHash;
+      delete pRes.salt;
+
+      return {
+        success: true,
+        patient: pRes,
+        medicines: pState.medicines || [],
+        appointments: pState.appointments || [],
+        logs: pState.logs || [],
+        healthLogs: pState.healthLogs || []
+      };
+    }
+
+    if (path === '/api/caregiver/link-patient') {
+      const cgId = data?.caregiver_id || data?.userId;
+      const targetId = (data?.target_id || data?.patientId || data?.email || data?.mobile || '').toString().trim().toLowerCase();
+
+      if (!cgId || !targetId) throw new Error("Missing parameters");
+
+      const targetPatient = dbData.users.find(u =>
+        u.role === 'patient' && (u.id.toLowerCase() === targetId || (u.email || '').toLowerCase() === targetId || u.mobile === targetId)
+      );
+
+      if (!targetPatient) {
+        throw new Error("Patient not found with provided Email or Mobile number");
+      }
+
+      const cgUser = dbData.users.find(u => u.id === cgId);
+      if (cgUser) {
+        cgUser.primaryDoctorId = targetPatient.id;
+      }
+      targetPatient.primaryDoctorId = cgId;
+      localStorage.setItem('aegis_local_db', JSON.stringify(dbData));
+
+      return { success: true, message: "Patient linked successfully", patient: targetPatient };
+    }
+
     if (path === '/api/patient-details') {
       const patientId = query.get('id');
       const user = dbData.users.find(u => u.id === patientId);
@@ -3710,7 +3817,14 @@ class AegisAppController {
       if (confirm(stateStore.data.settings.lang === 'te' ? "మీరు లాగ్ అవుట్ చేయాలనుకుంటున్నారా?" :
                   stateStore.data.settings.lang === 'hi' ? "क्या आप लॉग आउट करना चाहते हैं?" :
                   "Are you sure you want to log out?")) {
+        this.stopCaregiverLiveSync();
         stateStore.data.activePatient = null;
+        stateStore.data.linkedPatient = null;
+        stateStore.data.medicines = [];
+        stateStore.data.logs = [];
+        stateStore.data.healthLogs = [];
+        stateStore.data.appointments = [];
+        stateStore.data.assignedPatients = [];
         stateStore.saveState();
         this.activeTab = 'tab-appointments'; // Reset default tab
         this.checkAuthSession();
@@ -6608,11 +6722,283 @@ class AegisAppController {
     }
   }
 
-  renderCaregiverDashboard() {
+  startCaregiverLiveSync() {
+    if (this.caregiverSyncTimer) return;
+    this.caregiverSyncTimer = setInterval(async () => {
+      if (this.activeTab === 'tab-caregiver-dashboard' && stateStore.data.activePatient?.role === 'caregiver') {
+        try {
+          const active = stateStore.data.activePatient;
+          const res = await this.apiCall(`/api/caregiver/patients?caregiver_id=${active.id}`, 'GET');
+          if (res && res.patients) {
+            stateStore.data.assignedPatients = res.patients;
+            this.renderAssignedPatientCards(res.patients);
+          }
+        } catch (err) {
+          // Silent background sync
+        }
+      }
+    }, 5000);
+  }
+
+  stopCaregiverLiveSync() {
+    if (this.caregiverSyncTimer) {
+      clearInterval(this.caregiverSyncTimer);
+      this.caregiverSyncTimer = null;
+    }
+  }
+
+  renderAssignedPatientCards(patients) {
+    const container = document.getElementById('cg-assigned-patients-section');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!patients || patients.length === 0) {
+      container.innerHTML = `
+        <div style="background: rgba(30, 41, 59, 0.5); border: 1px dashed var(--glass-border); padding: 1rem; border-radius: var(--border-radius-md); text-align: center; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          No assigned patients linked to your account yet. Use the Link Patient input below to connect a patient.
+        </div>
+      `;
+      return;
+    }
+
+    const titleEl = document.createElement('h3');
+    titleEl.style.cssText = 'font-size: 1.05rem; font-weight: 700; color: var(--teal-color); margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 0.4rem;';
+    titleEl.innerHTML = `👥 Assigned Linked Patients (${patients.length})`;
+    container.appendChild(titleEl);
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1rem;';
+
+    patients.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'dashboard-card';
+      card.style.cssText = 'padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; border: 1px solid var(--glass-border); background: rgba(30, 41, 59, 0.7);';
+
+      const avatarHtml = p.photo 
+        ? `<img src="${p.photo}" style="width:100%; height:100%; object-fit:cover;">`
+        : `<span style="font-size:1.2rem;">👤</span>`;
+
+      const adherenceColor = (p.adherencePct >= 80) ? 'var(--teal-color)' : (p.adherencePct >= 50 ? 'var(--amber-color)' : 'var(--rose-color)');
+
+      card.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.75rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.6rem;">
+          <div style="width: 2.8rem; height: 2.8rem; border-radius: 50%; overflow: hidden; background: rgba(45,212,191,0.1); border: 1px solid var(--teal-color); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            ${avatarHtml}
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${p.name}</h4>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">Age: ${p.age || '--'} | Blood: ${p.blood_group || p.blood || 'A+'}</div>
+          </div>
+          <span class="badge" style="background: rgba(45,212,191,0.1); color: ${adherenceColor}; border: 1px solid ${adherenceColor}; font-weight: 700;">${p.adherencePct || 100}%</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; text-align: center; font-size: 0.78rem;">
+          <div style="background: rgba(255,255,255,0.02); padding: 0.3rem; border-radius: 4px;">
+            <span style="display:block; color:var(--text-muted); font-size:0.65rem;">Taken</span>
+            <strong style="color:var(--teal-color);">${p.takenDoses || 0}</strong>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 0.3rem; border-radius: 4px;">
+            <span style="display:block; color:var(--text-muted); font-size:0.65rem;">Missed</span>
+            <strong style="color:var(--rose-color);">${p.missedDoses || 0}</strong>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 0.3rem; border-radius: 4px;">
+            <span style="display:block; color:var(--text-muted); font-size:0.65rem;">Pending</span>
+            <strong style="color:var(--amber-color);">${p.pendingDoses || 0}</strong>
+          </div>
+        </div>
+
+        <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.15rem;">
+          <div>📞 Emergency: <strong style="color:var(--text-primary);">${p.emergency_contact || p.emergency || '--'}</strong></div>
+          <div>🩺 Doctor: <strong style="color:var(--teal-color);">${p.primary_doctor_id || p.doctorName || '--'}</strong></div>
+        </div>
+
+        <div style="display: flex; gap: 0.4rem; margin-top: 0.2rem;">
+          <button class="btn btn-xs btn-teal" style="flex: 1; font-weight: 700; padding: 0.4rem;" onclick="appController.openPatientDetailModal('${p.id}')">
+            👁️ View Patient
+          </button>
+          <button class="btn btn-xs btn-glass" style="font-weight: 700; padding: 0.4rem;" onclick="appController.selectActiveMonitoredPatient('${p.id}')">
+            📌 Focus
+          </button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    container.appendChild(grid);
+  }
+
+  selectActiveMonitoredPatient(patientId) {
+    const assigned = stateStore.data.assignedPatients || [];
+    const found = assigned.find(p => p.id === patientId);
+    if (found) {
+      stateStore.data.linkedPatient = found;
+      stateStore.saveState();
+      this.renderCaregiverDashboard();
+    }
+  }
+
+  async openPatientDetailModal(patientId) {
+    try {
+      const active = stateStore.data.activePatient;
+      if (!active) return;
+      
+      const res = await this.apiCall(`/api/caregiver/patient-detail?caregiver_id=${active.id}&patient_id=${patientId}`, 'GET');
+      
+      if (!res.success) {
+        alert(res.error || "Failed to load patient details.");
+        return;
+      }
+
+      const p = res.patient;
+      const meds = res.medicines || [];
+      const vitals = res.healthLogs || [];
+      const logs = res.logs || [];
+
+      const nameEl = document.getElementById('profile-modal-patient-name');
+      const bloodEl = document.getElementById('profile-modal-patient-blood-badge');
+      const ageEl = document.getElementById('profile-modal-patient-age');
+      const genderEl = document.getElementById('profile-modal-patient-gender');
+      const mobileEl = document.getElementById('profile-modal-patient-mobile');
+      const emailEl = document.getElementById('profile-modal-patient-email');
+      const addressEl = document.getElementById('profile-modal-patient-address');
+      const emergencyEl = document.getElementById('profile-modal-patient-emergency');
+      const doctorEl = document.getElementById('profile-modal-patient-doctor');
+      const doctorPhoneEl = document.getElementById('profile-modal-patient-doctor-phone');
+
+      if (nameEl) nameEl.textContent = p.name || 'Patient';
+      if (bloodEl) bloodEl.textContent = `Blood: ${p.blood_group || p.blood || 'A+'}`;
+      if (ageEl) ageEl.textContent = p.age || '--';
+      if (genderEl) genderEl.textContent = p.gender || '--';
+      if (mobileEl) mobileEl.textContent = p.mobile || '--';
+      if (emailEl) emailEl.textContent = p.email || '--';
+      if (addressEl) addressEl.textContent = p.address || 'Not specified';
+      if (emergencyEl) emergencyEl.textContent = p.emergency_contact || p.emergency || '--';
+      if (doctorEl) doctorEl.textContent = p.primary_doctor_id || p.doctorName || '--';
+      if (doctorPhoneEl) doctorPhoneEl.textContent = p.doctor_phone || p.doctorPhone || '--';
+
+      const picImg = document.getElementById('profile-modal-pic-img');
+      const picFallback = document.getElementById('profile-modal-pic-fallback');
+      if (picImg && picFallback) {
+        if (p.photo) {
+          picImg.src = p.photo;
+          picImg.classList.remove('hide');
+          picFallback.classList.add('hide');
+        } else {
+          picImg.src = '';
+          picImg.classList.add('hide');
+          picFallback.classList.remove('hide');
+        }
+      }
+
+      const medsListEl = document.getElementById('profile-modal-meds-list');
+      if (medsListEl) {
+        medsListEl.innerHTML = '';
+        if (meds.length === 0) {
+          medsListEl.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted);">No medicines prescribed</div>';
+        } else {
+          meds.forEach(m => {
+            const timesStr = Array.isArray(m.times) ? m.times.map(t => this.format12Hour(t)).join(', ') : m.times;
+            const div = document.createElement('div');
+            div.style.cssText = 'background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 0.5rem 0.75rem; border-radius: 6px; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center;';
+            div.innerHTML = `
+              <div>
+                <strong style="color:var(--text-primary);">${m.name}</strong> (${m.dosage})
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${m.instructions || 'Daily'}</div>
+              </div>
+              <span class="badge badge-normal" style="font-size: 0.7rem;">🕒 ${timesStr}</span>
+            `;
+            medsListEl.appendChild(div);
+          });
+        }
+      }
+
+      const vitalsEl = document.getElementById('profile-modal-vitals-summary');
+      if (vitalsEl) {
+        vitalsEl.innerHTML = '';
+        const bp = [...vitals].reverse().find(v => v.bloodPressure?.systolic || v.sys);
+        const sugar = [...vitals].reverse().find(v => v.bloodSugar?.value || v.sugar);
+
+        const bpText = bp ? `${bp.bloodPressure?.systolic || bp.sys}/${bp.bloodPressure?.diastolic || bp.dia} mmHg` : 'No Log';
+        const sugarText = sugar ? `${sugar.bloodSugar?.value || sugar.sugar} mg/dL` : 'No Log';
+
+        vitalsEl.innerHTML = `
+          <div style="background: rgba(45,212,191,0.05); border: 1px solid rgba(45,212,191,0.2); padding: 0.5rem; border-radius: 6px; text-align: center;">
+            <span style="font-size:0.7rem; color:var(--text-muted); display:block;">Blood Pressure</span>
+            <strong style="font-size:0.9rem; color:var(--teal-color);">${bpText}</strong>
+          </div>
+          <div style="background: rgba(244,63,94,0.05); border: 1px solid rgba(244,63,94,0.2); padding: 0.5rem; border-radius: 6px; text-align: center;">
+            <span style="font-size:0.7rem; color:var(--text-muted); display:block;">Blood Sugar</span>
+            <strong style="font-size:0.9rem; color:var(--rose-color);">${sugarText}</strong>
+          </div>
+        `;
+      }
+
+      const logsListEl = document.getElementById('profile-modal-logs-list');
+      if (logsListEl) {
+        logsListEl.innerHTML = '';
+        if (logs.length === 0) {
+          logsListEl.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted);">No activity recorded yet</div>';
+        } else {
+          logs.slice(0, 5).forEach(l => {
+            const statusClass = l.status === 'taken' ? 'badge-normal' : 'badge-warning';
+            const div = document.createElement('div');
+            div.style.cssText = 'font-size: 0.78rem; display: flex; justify-content: space-between; padding: 0.3rem 0; border-bottom: 1px solid rgba(255,255,255,0.03);';
+            div.innerHTML = `
+              <span>${l.date || ''} ${l.time || ''} - <strong>${l.medicineName || l.medicine_id}</strong></span>
+              <span class="badge ${statusClass}">${(l.status || 'pending').toUpperCase()}</span>
+            `;
+            logsListEl.appendChild(div);
+          });
+        }
+      }
+
+      const monSec = document.getElementById('profile-modal-monitoring-details');
+      if (monSec) monSec.classList.remove('hide');
+
+      const editBtn = document.getElementById('profile-edit-toggle-btn');
+      if (editBtn) editBtn.classList.add('hide');
+
+      const modal = document.getElementById('patient-profile-modal');
+      if (modal) modal.classList.remove('hide');
+
+    } catch (err) {
+      if (err.message && err.message.includes('403')) {
+        alert("403 Forbidden: Unauthorized access to patient data.");
+      } else {
+        alert("Error viewing patient profile: " + err.message);
+      }
+    }
+  }
+
+  async renderCaregiverDashboard() {
     const lang = stateStore.data.settings.lang || 'en';
-    
+    const activeCaregiver = stateStore.data.activePatient;
+    if (!activeCaregiver) return;
+
+    this.startCaregiverLiveSync();
+
+    const cgAccountName = document.getElementById('cg-account-name');
+    if (cgAccountName) {
+      cgAccountName.textContent = `${activeCaregiver.name} (${activeCaregiver.email || activeCaregiver.mobile})`;
+    }
+
+    try {
+      const res = await this.apiCall(`/api/caregiver/patients?caregiver_id=${activeCaregiver.id}`, 'GET');
+      if (res && res.patients) {
+        stateStore.data.assignedPatients = res.patients;
+      }
+    } catch (err) {
+      console.warn("API fetch caregiver patients failed:", err);
+    }
+
+    const assignedPatients = stateStore.data.assignedPatients || [];
+    this.renderAssignedPatientCards(assignedPatients);
+
     // Auto-link to default demo patient if no linkedPatient exists yet
-    if (!stateStore.data.linkedPatient) {
+    if (!stateStore.data.linkedPatient && assignedPatients.length > 0) {
+      stateStore.data.linkedPatient = assignedPatients[0];
+    } else if (!stateStore.data.linkedPatient) {
       stateStore.data.linkedPatient = {
         id: 'patient_1',
         name: 'Ram Rao',
@@ -6937,54 +7323,21 @@ class AegisAppController {
       const active = stateStore.data.activePatient;
       if (!active) return;
 
-      active.primaryDoctorId = targetId;
-
-      // Save updated primaryDoctorId to backend
-      await this.apiCall('/api/state/save', 'POST', {
-        userId: active.id,
-        profile: {
-          name: active.name,
-          primaryDoctorId: targetId
-        }
+      const res = await this.apiCall('/api/caregiver/link-patient', 'POST', {
+        caregiver_id: active.id,
+        target_id: targetId
       });
 
-      // Try searching for patient in db
-      let pSnapshot = await db.collection('users')
-        .where('role', '==', 'patient')
-        .where('email', '==', targetId.toLowerCase())
-        .get();
-      if (pSnapshot.empty) {
-        pSnapshot = await db.collection('users')
-          .where('role', '==', 'patient')
-          .where('email', '==', targetId)
-          .get();
-      }
-      if (pSnapshot.empty) {
-        pSnapshot = await db.collection('users')
-          .where('role', '==', 'patient')
-          .where('mobile', '==', targetId)
-          .get();
-      }
-
-      if (!pSnapshot.empty) {
-        const linkedPatient = pSnapshot.docs[0].data();
-        stateStore.data.linkedPatient = linkedPatient;
-
-        const pStateDoc = await db.collection('states').doc(linkedPatient.id).get();
-        if (pStateDoc.exists) {
-          const pState = pStateDoc.data();
-          stateStore.data.medicines = pState.medicines || [];
-          stateStore.data.appointments = pState.appointments || [];
-          stateStore.data.logs = pState.logs || [];
-          stateStore.data.linkedPatientSettings = pState.settings || {};
-          stateStore.data.healthLogs = pState.healthLogs || [];
+      if (res && res.success) {
+        if (res.patient) {
+          stateStore.data.linkedPatient = res.patient;
         }
         stateStore.saveState();
-        this.renderCaregiverDashboard();
+        await this.renderCaregiverDashboard();
         this.playSuccessConfetti();
+        alert(`Successfully linked to patient: ${res.patient?.name || targetId}`);
       } else {
-        alert("Patient link saved! If running locally or on server, reloading will refresh patient metrics.");
-        this.renderCaregiverDashboard();
+        alert(res?.error || "Failed to link patient.");
       }
     } catch (err) {
       alert("Error linking patient: " + err.message);

@@ -6,6 +6,8 @@ import hashlib
 import os
 import urllib.parse
 import sys
+import time
+from datetime import datetime
 
 PORT = 8080
 IS_VERCEL = 'VERCEL' in os.environ
@@ -138,6 +140,25 @@ def init_db():
         )
     ''')
     
+    # Caregiver-Patient Mapping Table (Relational User ID linking)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS caregiver_patient (
+            id TEXT PRIMARY KEY,
+            caregiver_id TEXT NOT NULL,
+            patient_id TEXT NOT NULL,
+            relationship TEXT DEFAULT 'Caregiver',
+            status TEXT NOT NULL DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (caregiver_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (patient_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE(caregiver_id, patient_id)
+        )
+    ''')
+
+    # Indexed database queries for fast execution
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_cg_pt_caregiver ON caregiver_patient(caregiver_id)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_cg_pt_patient ON caregiver_patient(patient_id)')
+
     conn.commit()
     
     # Seed default Admin and Doctor if they don't exist
@@ -195,6 +216,14 @@ def init_db():
             INSERT INTO medicines (id, user_id, name, type, dosage, times, frequency, stock, refill_alert_at, instructions)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', ('med_seed_2', 'patient_1', 'Amoxicillin (Antibiotic)', 'capsule', '1 capsule (500mg)', '["08:00", "14:00", "20:00"]', 'daily', 6, 5, 'Take after eating food. Complete full course.'))
+
+    # Seed caregiver_patient link for caregiver_1 -> patient_1
+    cursor.execute("SELECT id FROM caregiver_patient WHERE caregiver_id = 'caregiver_1' AND patient_id = 'patient_1'")
+    if not cursor.fetchone():
+        cursor.execute('''
+            INSERT INTO caregiver_patient (id, caregiver_id, patient_id, relationship, status)
+            VALUES ('cp_seed_1', 'caregiver_1', 'patient_1', 'Family Member', 'active')
+        ''')
         
     conn.commit()
     conn.close()
@@ -474,6 +503,140 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     "appointments": appts,
                     "logs": logs,
                     "healthLogs": health_logs
+                })
+                
+            elif path == '/api/caregiver/patients':
+                caregiver_id = query.get('caregiver_id', [None])[0] or query.get('userId', [None])[0]
+                if not caregiver_id:
+                    self.send_json_response({"error": "Missing caregiver ID"}, 400)
+                    return
+                    
+                cursor.execute('''
+                    SELECT u.id, u.name, u.email, u.mobile, u.age, u.gender, u.blood_group, u.photo, u.emergency_contact, u.primary_doctor_id, u.doctor_phone, cp.relationship
+                    FROM users u
+                    JOIN caregiver_patient cp ON u.id = cp.patient_id
+                    WHERE cp.caregiver_id = ? AND cp.status = 'active'
+                ''', (caregiver_id,))
+                
+                patient_rows = cursor.fetchall()
+                patient_cards = []
+                today_str = datetime.now().strftime('%Y-%m-%d')
+                
+                for p_row in patient_rows:
+                    p = dict(p_row)
+                    p_id = p['id']
+                    
+                    cursor.execute('SELECT * FROM medicines WHERE user_id = ?', (p_id,))
+                    meds = [dict(m) for m in cursor.fetchall()]
+                    
+                    cursor.execute('SELECT * FROM logs WHERE user_id = ?', (p_id,))
+                    logs = [dict(l) for l in cursor.fetchall()]
+                    
+                    today_logs = [l for l in logs if l.get('date') == today_str]
+                    taken_count = len([l for l in today_logs if l.get('status') == 'taken'])
+                    missed_count = len([l for l in today_logs if l.get('status') in ['missed', 'skipped']])
+                    
+                    total_med_doses = 0
+                    for m in meds:
+                        t_val = m.get('times')
+                        if isinstance(t_val, str):
+                            try:
+                                t_list = json.loads(t_val)
+                            except Exception:
+                                t_list = [t_val] if t_val else []
+                        elif isinstance(t_val, list):
+                            t_list = t_val
+                        else:
+                            t_list = []
+                        total_med_doses += len(t_list)
+
+                    pending_count = max(0, total_med_doses - (taken_count + missed_count))
+                    
+                    total_logged = len(logs)
+                    total_taken = len([l for l in logs if l.get('status') == 'taken'])
+                    adherence_pct = round((total_taken / total_logged * 100)) if total_logged > 0 else 100
+                    
+                    p['todayMedicines'] = total_med_doses
+                    p['takenDoses'] = taken_count
+                    p['missedDoses'] = missed_count
+                    p['pendingDoses'] = pending_count
+                    p['adherencePct'] = adherence_pct
+                    p['medicinesCount'] = len(meds)
+                    
+                    patient_cards.append(p)
+                    
+                self.send_json_response({"success": True, "patients": patient_cards})
+
+            elif path == '/api/caregiver/patient-detail':
+                caregiver_id = query.get('caregiver_id', [None])[0] or query.get('userId', [None])[0]
+                patient_id = query.get('patient_id', [None])[0] or query.get('id', [None])[0]
+                
+                if not caregiver_id or not patient_id:
+                    self.send_json_response({"error": "Missing parameters"}, 400)
+                    return
+                    
+                # SECURITY AUTHORIZATION CHECK: Ensure relationship exists
+                cursor.execute('SELECT id FROM caregiver_patient WHERE caregiver_id = ? AND patient_id = ? AND status = \'active\'', (caregiver_id, patient_id))
+                auth_check = cursor.fetchone()
+                
+                if not auth_check:
+                    cursor.execute('SELECT id FROM users WHERE id = ? AND primary_doctor_id = (SELECT email FROM users WHERE id = ?)', (patient_id, caregiver_id))
+                    auth_check = cursor.fetchone()
+                    
+                if not auth_check and caregiver_id != 'admin_1':
+                    self.send_json_response({"error": "403 Forbidden: Unauthorized access to patient data."}, 403)
+                    return
+                    
+                cursor.execute('SELECT id, name, role, email, mobile, age, gender, blood_group, address, photo, emergency_contact, primary_doctor_id, doctor_phone FROM users WHERE id = ?', (patient_id,))
+                p_row = cursor.fetchone()
+                if not p_row:
+                    self.send_json_response({"error": "Patient not found"}, 404)
+                    return
+                    
+                p_data = dict(p_row)
+                
+                cursor.execute('SELECT * FROM medicines WHERE user_id = ?', (patient_id,))
+                meds = []
+                for m in cursor.fetchall():
+                    med = dict(m)
+                    t_val = med.get('times')
+                    if isinstance(t_val, str):
+                        try:
+                            med['times'] = json.loads(t_val)
+                        except Exception:
+                            med['times'] = [t_val] if t_val else []
+                    elif not isinstance(t_val, list):
+                        med['times'] = []
+                    meds.append(med)
+                    
+                cursor.execute('SELECT * FROM appointments WHERE patient_id = ?', (patient_id,))
+                appts = [dict(a) for a in cursor.fetchall()]
+                
+                cursor.execute('SELECT * FROM logs WHERE user_id = ? ORDER BY timestamp DESC', (patient_id,))
+                logs = [dict(l) for l in cursor.fetchall()]
+                
+                cursor.execute('SELECT * FROM health_logs WHERE user_id = ? ORDER BY timestamp DESC', (patient_id,))
+                vitals = []
+                for h in cursor.fetchall():
+                    h_dict = dict(h)
+                    vitals.append({
+                        "id": h_dict["id"],
+                        "timestamp": h_dict["timestamp"],
+                        "date": h_dict["date"],
+                        "time": h_dict["time"],
+                        "bloodPressure": { "systolic": h_dict["sys"], "diastolic": h_dict["dia"] },
+                        "bloodSugar": { "value": h_dict["sugar"], "type": h_dict["sugar_type"] },
+                        "weight": h_dict["weight"],
+                        "pulse": h_dict["pulse"]
+                    })
+                    
+                self.send_json_response({
+                    "success": True,
+                    "patient": p_data,
+                    "medicines": meds,
+                    "appointments": appts,
+                    "logs": logs,
+                    "healthLogs": vitals
                 })
                 
             elif path == '/api/admin/users':
@@ -869,6 +1032,37 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 conn.commit()
                 self.send_json_response({"success": True})
                 
+            elif path == '/api/caregiver/link-patient':
+                caregiver_id = body.get('caregiver_id') or body.get('userId')
+                target_id = body.get('target_id') or body.get('patientId') or body.get('email') or body.get('mobile')
+                if not caregiver_id or not target_id:
+                    self.send_json_response({"error": "Missing caregiver ID or patient identifier"}, 400)
+                    return
+                    
+                target_clean = str(target_id).strip().lower()
+                cursor.execute('''
+                    SELECT id, name, email, mobile, age, gender, blood_group, photo, emergency_contact, primary_doctor_id, doctor_phone
+                    FROM users
+                    WHERE (LOWER(id) = ? OR LOWER(email) = ? OR mobile = ?) AND role = 'patient'
+                ''', (target_clean, target_clean, str(target_id).strip()))
+                p_row = cursor.fetchone()
+                
+                if not p_row:
+                    self.send_json_response({"error": "Patient not found with provided Email or Mobile number"}, 404)
+                    return
+                    
+                p_data = dict(p_row)
+                patient_id = p_data['id']
+                
+                link_id = f"cp_{int(datetime.now().timestamp())}"
+                cursor.execute('''
+                    INSERT OR REPLACE INTO caregiver_patient (id, caregiver_id, patient_id, relationship, status)
+                    VALUES (?, ?, ?, 'Family Member', 'active')
+                ''', (link_id, caregiver_id, patient_id))
+                
+                conn.commit()
+                self.send_json_response({"success": True, "message": "Patient linked successfully", "patient": p_data})
+                
             elif path == '/api/admin/users/create':
                 # Create a user (Admin only)
                 name = body.get('name')
@@ -947,13 +1141,13 @@ if __name__ == '__main__':
             continue
 
     if not httpd:
-        print("❌ Error: Could not bind to any port (8080, 5000, 8000, 3000). Ensure ports are free.")
+        print("[ERROR] Could not bind to any port (8080, 5000, 8000, 3000). Ensure ports are free.")
         sys.exit(1)
 
     print("====================================================================")
-    print(" 🚀 MEDICINE REMINDER FULL-STACK SERVER IS RUNNING PERFECTLY!")
-    print(f" 👉 Open in Web Browser: http://localhost:{chosen_port}")
-    print(f" 👉 Alternative IP:      http://127.0.0.1:{chosen_port}")
+    print(" [SERVER RUNNING] MEDICINE REMINDER FULL-STACK SERVER IS READY!")
+    print(f" -> Open in Web Browser: http://localhost:{chosen_port}")
+    print(f" -> Alternative IP:      http://127.0.0.1:{chosen_port}")
     print("====================================================================")
 
     try:

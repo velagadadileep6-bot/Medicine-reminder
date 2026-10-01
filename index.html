@@ -842,6 +842,9 @@
            TAB 4B: CAREGIVER LIVE MONITORING DASHBOARD
            ========================================== -->
       <section id="tab-caregiver-dashboard" class="tab-panel">
+        <!-- ASSIGNED LINKED PATIENTS CARDS GRID -->
+        <div id="cg-assigned-patients-section" style="width: 100%; margin-bottom: 1.25rem;"></div>
+
         <!-- DUAL ACCOUNT SUMMARY: CAREGIVER PROFILE & LINKED PATIENT PROFILE -->
         <div id="cg-patient-card-header" class="dashboard-card hide" style="flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; padding: 1.25rem; background: rgba(30, 41, 59, 0.75); border: 1px solid var(--glass-border); width: 100%;">
           
@@ -1490,6 +1493,31 @@
             <div style="display: flex; justify-content: space-between;">
               <span class="sub-label" style="font-size:0.8rem;" data-i18n="profileDocPhone">Doctor Contact</span>
               <span id="profile-modal-patient-doctor-phone" style="font-weight:600; color: var(--text-primary);">9876543212</span>
+            </div>
+          </div>
+
+          <!-- Additional Caregiver Monitored Patient Data (Medicines, Vitals, Recent Logs) -->
+          <div id="profile-modal-monitoring-details" class="hide" style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.8rem; border-top: 1px dashed var(--glass-border); padding-top: 0.8rem;">
+            
+            <h4 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--teal-color); display: flex; align-items: center; gap: 0.4rem;">
+              💊 Prescribed Medicines & Dosage Schedule
+            </h4>
+            <div id="profile-modal-meds-list" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 180px; overflow-y: auto;">
+              <!-- Dynamic Medicine List -->
+            </div>
+
+            <h4 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--rose-color); display: flex; align-items: center; gap: 0.4rem;">
+              ❤️ Latest Health Vitals
+            </h4>
+            <div id="profile-modal-vitals-summary" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+              <!-- Dynamic Vitals Summary -->
+            </div>
+
+            <h4 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: var(--amber-color); display: flex; align-items: center; gap: 0.4rem;">
+              📋 Dose Log History
+            </h4>
+            <div id="profile-modal-logs-list" style="display: flex; flex-direction: column; gap: 0.3rem; max-height: 140px; overflow-y: auto;">
+              <!-- Dynamic Logs List -->
             </div>
           </div>
         </div>
