@@ -1882,7 +1882,7 @@ async function initLocalDB() {
 // ==========================================
 class AegisAppController {
   constructor() {
-    this.activeTab = 'tab-appointments';
+    this.activeTab = 'tab-dashboard';
   }
 
   async apiCall(url, method = 'GET', data = null) {
@@ -1933,7 +1933,13 @@ class AegisAppController {
     
     if (path === '/api/auth/register') {
       const { name, email, mobile, password, role } = data;
-      const dup = dbData.users.find(u => u.email === email.trim().toLowerCase() || u.mobile === mobile.trim());
+      const cleanEmail = (email || '').trim().toLowerCase();
+      const cleanMobile = (mobile || '').trim();
+      
+      const dup = dbData.users.find(u => 
+        (cleanEmail !== '' && (u.email || '').trim().toLowerCase() === cleanEmail) || 
+        (cleanMobile !== '' && (u.mobile || '').trim() === cleanMobile)
+      );
       if (dup) {
         throw new Error("Email or mobile number already registered!");
       }
@@ -2024,9 +2030,20 @@ class AegisAppController {
     
     if (path === '/api/auth/login') {
       const { identifier, password, role } = data;
-      const iden = identifier.trim().toLowerCase();
+      const idenTrim = (identifier || '').trim();
+      const idenLower = idenTrim.toLowerCase();
       
-      const user = dbData.users.find(u => (u.email === iden || u.mobile === identifier.trim()) && u.role === role);
+      let user = dbData.users.find(u => 
+        (((u.email || '').toLowerCase() === idenLower && idenLower !== '') || 
+         ((u.mobile || '').trim() === idenTrim && idenTrim !== '')) && 
+        u.role === role
+      );
+      if (!user) {
+        user = dbData.users.find(u => 
+          ((u.email || '').toLowerCase() === idenLower && idenLower !== '') || 
+          ((u.mobile || '').trim() === idenTrim && idenTrim !== '')
+        );
+      }
       if (!user) {
         throw new Error("Invalid email/mobile, password, or role!");
       }
@@ -3528,7 +3545,7 @@ class AegisAppController {
           
           // Switch view based on role
           if (role === 'patient') {
-            this.activeTab = 'tab-appointments'; // Force Appointments tab on login
+            this.activeTab = 'tab-dashboard'; // Default Daily Schedule Dashboard on login
             this.checkAuthSession();
             this.loadSettings();
             this.renderDailySchedule();
@@ -3633,7 +3650,7 @@ class AegisAppController {
             console.log("Routing view based on role:", role);
             // Switch view based on role
             if (role === 'patient') {
-              this.activeTab = 'tab-appointments';
+              this.activeTab = 'tab-dashboard';
               this.checkAuthSession();
               this.loadSettings();
               this.renderDailySchedule();
@@ -3728,7 +3745,7 @@ class AegisAppController {
             this.playSuccessConfetti();
             
             if (role === 'patient') {
-              this.activeTab = 'tab-appointments'; // Force Appointments tab on registration login
+              this.activeTab = 'tab-dashboard'; // Default Daily Schedule Dashboard on registration login
               this.checkAuthSession();
               this.loadSettings();
               this.renderDailySchedule();
@@ -3898,7 +3915,7 @@ class AegisAppController {
         stateStore.data.appointments = [];
         stateStore.data.assignedPatients = [];
         stateStore.saveState();
-        this.activeTab = 'tab-appointments'; // Reset default tab
+        this.activeTab = 'tab-dashboard'; // Reset default tab
         this.checkAuthSession();
       }
     });
@@ -4344,12 +4361,12 @@ class AegisAppController {
         if (directSwitchBtn) directSwitchBtn.classList.remove('hide');
         if (directSwitchLabel) directSwitchLabel.textContent = 'Caregiver View';
 
-        // Go to default patient view (Appointments or Dashboard)
-        const targetTab = this.activeTab || 'tab-appointments';
+        // Go to default patient view (Daily Schedule Dashboard)
+        const targetTab = this.activeTab || 'tab-dashboard';
         if (targetTab === 'tab-doctor-dashboard' || targetTab === 'tab-admin-dashboard' || targetTab === 'tab-caregiver-dashboard') {
-          this.activeTab = 'tab-appointments';
+          this.activeTab = 'tab-dashboard';
         }
-        this.switchTab(this.activeTab || 'tab-appointments');
+        this.switchTab(this.activeTab || 'tab-dashboard');
         
       } else if (active.role === 'caregiver') {
         patientTabs.forEach(t => t.classList.add('hide'));
@@ -7467,8 +7484,8 @@ class AegisAppController {
       patientTabs.forEach(t => t.classList.remove('hide'));
       if (caregiverTab) caregiverTab.classList.add('hide');
 
-      this.activeTab = 'tab-appointments';
-      this.switchTab('tab-appointments');
+      this.activeTab = 'tab-dashboard';
+      this.switchTab('tab-dashboard');
       this.renderDailySchedule();
       this.renderCabinet();
       this.renderAnalytics();
