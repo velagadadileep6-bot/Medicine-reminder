@@ -6895,6 +6895,15 @@ class AegisAppController {
     }
   }
 
+  openActivePatientDetailModal() {
+    const lp = stateStore.data.linkedPatient;
+    if (lp && lp.id) {
+      this.openPatientDetailModal(lp.id);
+    } else {
+      alert("No active patient is linked.");
+    }
+  }
+
   async openPatientDetailModal(patientId) {
     try {
       const active = stateStore.data.activePatient;
@@ -7096,15 +7105,29 @@ class AegisAppController {
     const lp = stateStore.data.linkedPatient;
     const activeCaregiver = stateStore.data.activePatient;
     
-    // Fill Caregiver Header Info
+    // Fill Caregiver Header Info (Card 1)
     const cgAccountName = document.getElementById('cg-account-name');
+    const cgAccountEmailDisplay = document.getElementById('cg-account-email-display');
+    const cgAccountMobileDisplay = document.getElementById('cg-account-mobile-display');
+    const cgManagedCountDisplay = document.getElementById('cg-managed-count-display');
+
     if (cgAccountName && activeCaregiver) {
-      cgAccountName.textContent = `${activeCaregiver.name} (${activeCaregiver.email})`;
+      cgAccountName.textContent = activeCaregiver.name || 'Caregiver Account';
+    }
+    if (cgAccountEmailDisplay && activeCaregiver) {
+      cgAccountEmailDisplay.textContent = activeCaregiver.email || '--';
+    }
+    if (cgAccountMobileDisplay && activeCaregiver) {
+      cgAccountMobileDisplay.textContent = activeCaregiver.mobile || '--';
+    }
+    if (cgManagedCountDisplay) {
+      cgManagedCountDisplay.textContent = `${assignedPatients.length} Patient(s)`;
     }
 
-    // Fill Monitored Patient Header Info
+    // Fill Monitored Patient Header Info (Card 2)
     const cgPatName = document.getElementById('cg-patient-name');
     const cgPatAge = document.getElementById('cg-patient-age');
+    const cgPatGender = document.getElementById('cg-patient-gender-display');
     const cgPatBlood = document.getElementById('cg-patient-blood');
     const cgPatEmergency = document.getElementById('cg-patient-emergency');
     const cgPatDoctor = document.getElementById('cg-patient-doctor');
@@ -7112,6 +7135,7 @@ class AegisAppController {
     
     if (cgPatName) cgPatName.textContent = lp.name || 'Ram Rao';
     if (cgPatAge) cgPatAge.textContent = lp.age || '68';
+    if (cgPatGender) cgPatGender.textContent = lp.gender || 'male';
     if (cgPatBlood) cgPatBlood.textContent = lp.blood || 'A+';
     if (cgPatEmergency) cgPatEmergency.textContent = lp.emergency || '9876543211';
     if (cgPatDoctor) cgPatDoctor.textContent = lp.primaryDoctorId || 'Dr. Prasad';
