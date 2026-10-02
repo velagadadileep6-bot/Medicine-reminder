@@ -662,24 +662,31 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             body = self.read_json_body()
             
             if path == '/api/auth/register':
-                name = body.get('name')
+                name = body.get('name', '').strip()
                 email = body.get('email', '').strip().lower()
-                mobile = body.get('mobile')
+                mobile = str(body.get('mobile', '')).strip()
                 password = body.get('password')
                 role = body.get('role', 'patient')
                 
-                if not name or not email or not mobile or not password:
-                    self.send_json_response({"error": "Missing required fields"}, 400)
+                if not name or not password or (not email and not mobile):
+                    self.send_json_response({"error": "Please enter Name, Password and either Email or Mobile number!"}, 400)
                     return
                 
                 # Check duplicate
-                cursor.execute('SELECT id FROM users WHERE email = ? OR mobile = ?', (email, mobile))
+                if email and mobile:
+                    cursor.execute('SELECT id FROM users WHERE (LOWER(email) = ? AND email != "") OR (mobile = ? AND mobile != "")', (email, mobile))
+                elif email:
+                    cursor.execute('SELECT id FROM users WHERE LOWER(email) = ? AND email != ""', (email,))
+                else:
+                    cursor.execute('SELECT id FROM users WHERE mobile = ? AND mobile != ""', (mobile,))
+
                 if cursor.fetchone():
                     self.send_json_response({"error": "Email or mobile number already registered!"}, 400)
                     return
                 
                 pass_hash, salt = hash_password(password)
-                user_id = f"{role}_{int(hashlib.md5(email.encode()).hexdigest(), 16) % 10000000}"
+                seed_str = email or mobile or name
+                user_id = f"{role}_{int(hashlib.md5(seed_str.encode()).hexdigest(), 16) % 10000000}"
                 
                 cursor.execute('''
                     INSERT INTO users (id, name, role, email, mobile, password_hash, salt, age, gender, blood_group, address, photo, emergency_contact, primary_doctor_id, doctor_phone)
