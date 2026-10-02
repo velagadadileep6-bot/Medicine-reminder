@@ -806,7 +806,7 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 payload = self.get_user_login_payload(cursor, user)
                 self.send_json_response(payload)
 
-            elif path == '/api/auth/google-login':
+            elif path in ('/api/auth/google-login', '/api/auth/google', '/api/auth/google-login/', '/api/auth/google/'):
                 email = body.get('email', '').strip().lower()
                 name = body.get('name', 'User')
                 photo = body.get('photo')

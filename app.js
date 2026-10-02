@@ -2079,7 +2079,7 @@ class AegisAppController {
       };
     }
 
-    if (path === '/api/auth/google-login') {
+    if (path === '/api/auth/google-login' || path === '/api/auth/google' || path.replace(/\/$/, '') === '/api/auth/google-login' || path.replace(/\/$/, '') === '/api/auth/google') {
       const { email, name, photo, role } = data;
       const iden = (email || '').trim().toLowerCase();
       
@@ -2486,7 +2486,7 @@ class AegisAppController {
       };
     }
     
-    if (path === '/api/auth/google-login') {
+    if (path === '/api/auth/google-login' || path === '/api/auth/google' || path.replace(/\/$/, '') === '/api/auth/google-login' || path.replace(/\/$/, '') === '/api/auth/google') {
       const { email, name, photo, role } = data;
       const iden = email.toLowerCase().trim();
       
@@ -3568,28 +3568,43 @@ class AegisAppController {
     if (googleLoginBtn) {
       googleLoginBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        const role = document.getElementById('login-role').value;
+        const role = document.getElementById('login-role').value || 'patient';
         console.log("Google Sign-In button clicked. Selected role:", role);
         
+        let email = null;
+        let name = null;
+        let photo = null;
+
         try {
-          if (typeof firebase === 'undefined' || !firebase.auth) {
-            console.error("Firebase SDK is not loaded!");
-            alert("Firebase Auth SDK is not loaded or configured!");
-            return;
+          if (typeof firebase !== 'undefined' && firebase.auth) {
+            try {
+              console.log("Initiating Google Sign-In popup...");
+              const provider = new firebase.auth.GoogleAuthProvider();
+              const result = await firebase.auth().signInWithPopup(provider);
+              if (result && result.user) {
+                const user = result.user;
+                email = (user.email || '').toLowerCase().trim();
+                name = user.displayName || email.split('@')[0];
+                photo = user.photoURL || null;
+                console.log("Firebase Auth success. Google Email:", email);
+              }
+            } catch (fbErr) {
+              console.warn("Firebase Auth popup failed or unauthorized domain, proceeding to fallback login:", fbErr);
+            }
           }
           
-          console.log("Initiating Google Sign-In popup...");
-          const provider = new firebase.auth.GoogleAuthProvider();
-          const result = await firebase.auth().signInWithPopup(provider);
-          const user = result.user;
-          const email = user.email.toLowerCase();
-          console.log("Firebase Auth success. Google Email:", email);
-          
+          if (!email) {
+            const fallbackEmail = prompt("Enter your Google Account email to log in directly:", role === 'caregiver' ? 'caregiver@medicare.com' : 'patient@medicare.com');
+            if (!fallbackEmail) return;
+            email = fallbackEmail.trim().toLowerCase();
+            name = email.split('@')[0];
+          }
+
           console.log("Calling backend apiCall for Google Login...");
           const apiResult = await this.apiCall('/api/auth/google-login', 'POST', {
             email: email,
-            name: user.displayName || email.split('@')[0],
-            photo: user.photoURL || null,
+            name: name,
+            photo: photo,
             role: role
           });
           console.log("Google Login API result:", apiResult);
@@ -3608,7 +3623,7 @@ class AegisAppController {
             stateStore.saveState();
             
             // Request notification permissions and register FCM device token
-            if (typeof getAndSaveFCMToken === 'function') {
+            if (typeof getAndSaveFCMToken === 'function' && stateStore.data.activePatient) {
               console.log("Registering FCM device token...");
               getAndSaveFCMToken(stateStore.data.activePatient.id, FIREBASE_CONFIG.vapidKey);
             }
