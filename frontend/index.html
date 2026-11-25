@@ -310,6 +310,14 @@
             </div>
           </div>
 
+          <!-- AI Prescription Scanner & Voice Assistant Quick Actions -->
+          <button id="header-scan-rx-btn" class="btn btn-glass btn-sm" style="border-color: var(--teal-color); color: var(--teal-color); font-weight: 700; display: flex; align-items: center; gap: 0.3rem;" title="AI Prescription Scanner (OCR)" onclick="appController.openPrescriptionScannerModal()">
+            <span>📷</span> <span>Scan Rx</span>
+          </button>
+          <button id="header-voice-ai-btn" class="btn btn-glass btn-sm" style="border-color: var(--blue-color); color: var(--blue-color); font-weight: 700; display: flex; align-items: center; gap: 0.3rem;" title="Telugu & English Voice Assistant" onclick="appController.openVoiceAssistantModal()">
+            <span>🎙️</span> <span>Voice AI</span>
+          </button>
+
           <!-- Direct Fast Role Switcher (Right Side Navbar) -->
           <button id="direct-switch-role-btn" class="btn btn-glass btn-sm" style="display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.75rem; border-color: var(--teal-color); color: var(--teal-color); font-weight: 700;" title="Direct Quick Switch Between Patient & Caregiver Dashboard" onclick="appController.handleDirectRoleSwitch()">
             <span style="font-size: 0.9rem;">⚡</span>
@@ -495,6 +503,45 @@
               <span>Dose in <strong id="countdown-timer">00m 00s</strong></span>
             </div>
           </div>
+
+          <!-- FEATURE 1: AI MEDICINE ADHERENCE PREDICTOR CARD -->
+          <div class="dashboard-card ai-prediction-card" id="ai-prediction-card" style="border: 1.5px solid rgba(59, 130, 246, 0.4); background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.9)); position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -15px; right: -15px; width: 80px; height: 80px; background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%); border-radius: 50%;"></div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.5rem; margin-bottom: 0.6rem;">
+              <span style="font-size: 0.72rem; text-transform: uppercase; font-weight: 800; color: var(--blue-color); letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.35rem;">
+                <span>🤖</span> <span>AI Adherence Forecaster</span>
+              </span>
+              <span id="ai-risk-badge" class="badge" style="background: rgba(45, 212, 191, 0.15); color: var(--teal-color); border: 1px solid var(--teal-color); font-weight: 700; font-size: 0.7rem;">🟢 Low Risk</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div style="text-align: center; min-width: 65px;">
+                <div id="ai-predicted-score" style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary); line-height: 1;">88%</div>
+                <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.2rem;">On-Time Probability</div>
+              </div>
+              <div style="flex: 1; font-size: 0.8rem; line-height: 1.4; color: var(--text-secondary);" id="ai-prediction-text">
+                Patient displays stable compliance. Historical analysis predicts <strong style="color: var(--teal-color);">high on-time probability</strong> for upcoming dose.
+              </div>
+            </div>
+            <div style="margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px dashed var(--glass-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
+              <span style="color: var(--text-muted);">💡 <strong id="ai-prediction-tip">Evening routine is optimal.</strong></span>
+              <button type="button" class="btn btn-xs btn-glass" style="border-color: var(--blue-color); color: var(--blue-color); font-weight: 700;" onclick="appController.runAIPredictionAnalysis(true)">Refresh AI</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- FEATURE 7: SMART CAREGIVER MISSED-DOSE ESCALATION BANNER -->
+        <div id="caregiver-escalation-banner" class="hide" style="margin-bottom: 1rem; padding: 0.85rem 1.25rem; border-radius: var(--border-radius-md); background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(225, 29, 72, 0.25)); border: 1.5px solid var(--rose-color); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span style="font-size: 1.5rem; animation: pulse 1s infinite;">🚨</span>
+            <div>
+              <h4 style="margin: 0; color: var(--rose-color); font-size: 0.95rem; font-weight: 800;">Missed-Dose Escalation Alert</h4>
+              <p id="caregiver-escalation-text" style="margin: 0.15rem 0 0 0; font-size: 0.82rem; color: var(--text-primary);">A medication dose is overdue by more than 30 minutes! Please confirm with patient.</p>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.4rem;">
+            <button id="escalation-whatsapp-btn" class="btn btn-xs btn-teal" style="font-weight: 700; background: #25D366; border-color: #25D366;" onclick="appController.dispatchEscalationWhatsApp()">💬 WhatsApp Alert</button>
+            <button class="btn btn-xs btn-glass font-danger" onclick="appController.dismissEscalationBanner()">Dismiss</button>
+          </div>
         </div>
 
         <!-- Dynamic Daily Checklist Header -->
@@ -546,12 +593,29 @@
             <h2>Medicine Cabinet</h2>
             <p class="section-desc">Manage your full inventory, schedules, and stock refills</p>
           </div>
-          <button id="add-medicine-btn" class="btn btn-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="16" height="16">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span>Add Medicine</span>
-          </button>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button id="cabinet-scan-rx-btn" class="btn btn-glass" style="border-color: var(--teal-color); color: var(--teal-color); font-weight: 700; display: flex; align-items: center; gap: 0.35rem;" onclick="appController.openPrescriptionScannerModal()">
+              <span>📷</span> <span>AI Scan Rx</span>
+            </button>
+            <button id="cabinet-interaction-guard-btn" class="btn btn-glass" style="border-color: var(--amber-color); color: var(--amber-color); font-weight: 700; display: flex; align-items: center; gap: 0.35rem;" onclick="appController.openDrugInteractionModal()">
+              <span>🛡️</span> <span id="interaction-guard-btn-label">Drug Guard</span>
+            </button>
+            <button id="add-medicine-btn" class="btn btn-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span>Add Medicine</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Drug Safety & Interaction Summary Strip -->
+        <div id="drug-interaction-summary-strip" style="margin-bottom: 1rem; padding: 0.65rem 1rem; border-radius: var(--border-radius-sm); background: rgba(30, 41, 59, 0.7); border: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span id="interaction-guard-status-icon">🛡️</span>
+            <span id="interaction-guard-status-text">Scanning cabinet for cross-medication interactions...</span>
+          </div>
+          <button type="button" class="btn btn-xs btn-glass" style="font-weight: 700; color: var(--teal-color); border-color: var(--teal-color);" onclick="appController.openDrugInteractionModal()">View Matrix</button>
         </div>
 
         <!-- Search and filters -->
@@ -598,7 +662,12 @@
             <h2>Compliance Analytics</h2>
             <p class="section-desc">View historical performance, trends, and records</p>
           </div>
-          <button id="clear-history-btn" class="btn btn-glass btn-sm font-danger">Clear All History</button>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button id="export-clinical-report-btn" class="btn btn-teal btn-sm" style="font-weight: 700; display: flex; align-items: center; gap: 0.35rem;" onclick="appController.exportClinicalReport()">
+              <span>📄</span> <span>Export Doctor Report</span>
+            </button>
+            <button id="clear-history-btn" class="btn btn-glass btn-sm font-danger">Clear All History</button>
+          </div>
         </div>
 
         <!-- Analytic Stat Grid -->
@@ -1690,6 +1759,188 @@
   <button type="button" id="sos-btn" class="btn-sos hide">
     <span>🚨</span>
     <small>SOS</small>
+  </button>
+
+  <!-- FEATURE 2: AI PRESCRIPTION SCANNER (OCR) MODAL -->
+  <div id="prescription-scanner-modal" class="modal-overlay hide">
+    <div class="modal-card" style="max-width: 620px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h2 style="display: flex; align-items: center; gap: 0.5rem; color: var(--teal-color);">
+          <span>📷</span> <span>AI Prescription Scanner (OCR)</span>
+        </h2>
+        <button type="button" class="close-modal-btn" onclick="appController.closePrescriptionScannerModal()">&times;</button>
+      </div>
+      <div class="modal-form" style="gap: 1rem; padding: 1rem 1.5rem;">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+          Upload a clear photo or doctor's prescription slip. The AI OCR engine extracts medicine names, dosages, and schedules automatically for your verification.
+        </p>
+
+        <!-- Dropzone / File input -->
+        <div id="rx-dropzone" style="border: 2px dashed var(--teal-color); border-radius: var(--border-radius-md); padding: 1.5rem; text-align: center; background: rgba(45, 212, 191, 0.05); cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('rx-file-input').click()">
+          <input type="file" id="rx-file-input" accept="image/*" class="hide" onchange="appController.handlePrescriptionFile(event)">
+          <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📄 ➔ 🤖</div>
+          <strong style="color: var(--teal-color); display: block; font-size: 0.95rem;">Click to Upload or Take Prescription Photo</strong>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Supports JPG, PNG, WEBP prescriptions</span>
+        </div>
+
+        <!-- Processing State -->
+        <div id="rx-scanner-loading" class="hide" style="text-align: center; padding: 1.5rem;">
+          <div style="width: 2.5rem; height: 2.5rem; border: 3px solid var(--teal-color); border-top-color: transparent; border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite;"></div>
+          <h4 style="margin: 0.75rem 0 0.25rem; color: var(--teal-color);">Analyzing Prescription with AI OCR...</h4>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">Extracting medications, dosage levels, and frequency timings</p>
+        </div>
+
+        <!-- Image Preview Canvas & Results -->
+        <div id="rx-results-container" class="hide" style="display: flex; flex-direction: column; gap: 0.8rem;">
+          <div style="display: flex; gap: 1rem; align-items: center; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: var(--border-radius-sm);">
+            <img id="rx-preview-img" src="" alt="Prescription" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid var(--glass-border);">
+            <div style="flex: 1;">
+              <span class="badge badge-normal" style="font-size: 0.65rem;">AI OCR Confidence: 94%</span>
+              <h4 style="margin: 0.25rem 0; font-size: 0.9rem;">Verified Prescription Extract</h4>
+              <p style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">Review extracted fields below before adding to cabinet</p>
+            </div>
+          </div>
+
+          <!-- Extracted Fields (Editable by User) -->
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label for="rx-ext-name" class="required">Detected Medicine Name</label>
+              <input type="text" id="rx-ext-name" class="form-control" placeholder="e.g. Paracetamol">
+            </div>
+            <div class="form-group flex-1">
+              <label for="rx-ext-dosage" class="required">Dosage</label>
+              <input type="text" id="rx-ext-dosage" class="form-control" placeholder="e.g. 500mg">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="rx-ext-type">Form</label>
+              <select id="rx-ext-type" class="form-select">
+                <option value="tablet">Tablet</option>
+                <option value="capsule">Capsule</option>
+                <option value="syrup">Syrup</option>
+                <option value="drops">Drops</option>
+                <option value="inhaler">Inhaler</option>
+                <option value="injection">Injection</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="rx-ext-freq">Frequency</label>
+              <select id="rx-ext-freq" class="form-select">
+                <option value="daily">Once Daily (OD)</option>
+                <option value="twice_daily">Twice Daily (BD - 1-0-1)</option>
+                <option value="thrice_daily">Three Times Daily (TDS)</option>
+                <option value="as_needed">As Needed (PRN)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="rx-ext-time">Primary Time</label>
+              <input type="time" id="rx-ext-time" class="form-control" value="08:00">
+            </div>
+            <div class="form-group">
+              <label for="rx-ext-stock">Quantity (Stock)</label>
+              <input type="number" id="rx-ext-stock" class="form-control" value="30" min="1">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="rx-ext-instructions">Doctor Instructions</label>
+            <input type="text" id="rx-ext-instructions" class="form-control" placeholder="Take after breakfast with water">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem; border-top: 1px solid var(--glass-border);">
+        <button type="button" class="btn btn-glass" onclick="appController.closePrescriptionScannerModal()">Cancel</button>
+        <button type="button" id="rx-save-btn" class="btn btn-teal hide" style="font-weight: 700;" onclick="appController.saveScannedPrescription()">✓ Confirm & Add to Cabinet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURE 3: DRUG INTERACTION DETECTION GUARD MODAL -->
+  <div id="drug-interaction-modal" class="modal-overlay hide">
+    <div class="modal-card" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h2 style="display: flex; align-items: center; gap: 0.5rem; color: var(--amber-color);">
+          <span>🛡️</span> <span>Drug Safety & Interaction Guard</span>
+        </h2>
+        <button type="button" class="close-modal-btn" onclick="appController.closeDrugInteractionModal()">&times;</button>
+      </div>
+      <div class="modal-form" style="gap: 1rem; padding: 1rem 1.5rem;">
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+          The Drug Interaction Guard continuously checks all medications in your active cabinet against clinical pharmacological conflict matrices to protect patients from adverse drug reactions.
+        </p>
+        
+        <div id="drug-interaction-results" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <!-- Dynamic interactions list rendered here -->
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--glass-border);">
+        <span style="font-size: 0.72rem; color: var(--text-muted);">Verified Against Clinical Pharmacological Safety DB</span>
+        <button type="button" class="btn btn-teal" onclick="appController.closeDrugInteractionModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURE 5: TELUGU & ENGLISH INTERACTIVE VOICE ASSISTANT MODAL -->
+  <div id="voice-assistant-modal" class="modal-overlay hide">
+    <div class="modal-card" style="max-width: 500px; text-align: center;">
+      <div class="modal-header">
+        <h2 style="display: flex; align-items: center; gap: 0.5rem; color: var(--blue-color); margin: 0 auto;">
+          <span>🎙️</span> <span>MediCare Voice Assistant</span>
+        </h2>
+        <button type="button" class="close-modal-btn" onclick="appController.closeVoiceAssistantModal()">&times;</button>
+      </div>
+      <div class="modal-form" style="padding: 1.5rem; gap: 1rem; align-items: center;">
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          Speak naturally in <strong>English</strong> or <strong>తెలుగు (Telugu)</strong>. Ask about upcoming medicines, doses taken, or stock levels.
+        </div>
+
+        <!-- Animated Voice Sphere & Waveform -->
+        <div id="voice-listening-visualizer" style="width: 90px; height: 90px; border-radius: 50%; background: radial-gradient(circle, #3b82f6, #1d4ed8); display: flex; align-items: center; justify-content: center; margin: 0.5rem auto; box-shadow: 0 0 30px rgba(59, 130, 246, 0.4); cursor: pointer; transition: all 0.3s;" onclick="appController.toggleVoiceListening()">
+          <span id="voice-mic-icon" style="font-size: 2.2rem;">🎙️</span>
+        </div>
+        <div id="voice-status-label" style="font-weight: 700; color: var(--blue-color); font-size: 0.95rem;">Tap Mic or Say Something...</div>
+
+        <!-- Transcript Display -->
+        <div id="voice-transcript-box" style="width: 100%; min-height: 50px; background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border); border-radius: var(--border-radius-sm); padding: 0.6rem 0.8rem; font-size: 0.85rem; color: var(--text-primary); text-align: left;">
+          <span style="color: var(--text-muted); font-style: italic;">User voice input will appear here...</span>
+        </div>
+
+        <!-- AI Assistant Spoken Response Output -->
+        <div id="voice-response-box" style="width: 100%; min-height: 60px; background: rgba(45, 212, 191, 0.08); border: 1px solid rgba(45, 212, 191, 0.25); border-radius: var(--border-radius-sm); padding: 0.6rem 0.8rem; font-size: 0.85rem; color: var(--teal-color); text-align: left;">
+          <strong>🤖 Assistant:</strong> <span id="voice-response-text">Hello! Ask: "When is my next medicine?" or "నా తదుపరి మందు ఎప్పుడు?"</span>
+        </div>
+
+        <!-- Quick Voice Command Buttons -->
+        <div style="width: 100%; border-top: 1px dashed var(--glass-border); padding-top: 0.8rem;">
+          <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.4rem; text-transform: uppercase; font-weight: 700;">Tap to Test Voice Command</span>
+          <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center;">
+            <button type="button" class="btn btn-xs btn-glass" onclick="appController.handleVoiceQuery('When is my next medicine?')">🇬🇧 Next Medicine?</button>
+            <button type="button" class="btn btn-xs btn-glass" onclick="appController.handleVoiceQuery('నా తదుపరి మందు ఎప్పుడు?')">🇮🇳 నా మందు ఎప్పుడు?</button>
+            <button type="button" class="btn btn-xs btn-glass" onclick="appController.handleVoiceQuery('What medicines do I have today?')">🇬🇧 Today's Schedule</button>
+            <button type="button" class="btn btn-xs btn-glass" onclick="appController.handleVoiceQuery('ఈ రోజు మందులు ఏమిటి?')">🇮🇳 నేటి మందులు</button>
+            <button type="button" class="btn btn-xs btn-glass font-danger" onclick="appController.handleVoiceQuery('Emergency SOS')">🚨 Emergency SOS</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 0.8rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--glass-border);">
+        <label style="font-size: 0.75rem; display: flex; align-items: center; gap: 0.35rem; cursor: pointer; color: var(--text-muted);">
+          <input type="checkbox" id="voice-speak-back-checkbox" checked>
+          <span>Spoken Audio Responses</span>
+        </label>
+        <button type="button" class="btn btn-teal btn-sm" onclick="appController.closeVoiceAssistantModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING VOICE ASSISTANT FAB -->
+  <button type="button" id="voice-assistant-fab" class="btn-voice-ai" title="Open Bilingual Voice Assistant (English & Telugu)" onclick="appController.openVoiceAssistantModal()">
+    <span>🎙️</span>
+    <small>Voice</small>
   </button>
 
   <!-- Firebase App and Firestore SDKs (v8 Global SDK) -->
