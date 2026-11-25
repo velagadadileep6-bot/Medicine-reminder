@@ -2027,18 +2027,24 @@ class AegisAppController {
       const { identifier, password, role } = data;
       const idenTrim = (identifier || '').trim();
       const idenLower = idenTrim.toLowerCase();
+      const idenDigits = idenTrim.replace(/\D/g, '');
+      const last10 = idenDigits.length >= 10 ? idenDigits.slice(-10) : idenDigits;
       
-      let user = dbData.users.find(u => 
-        (((u.email || '').toLowerCase() === idenLower && idenLower !== '') || 
-         ((u.mobile || '').trim() === idenTrim && idenTrim !== '')) && 
-        u.role === role
-      );
+      const checkMatch = (u) => {
+        const uEmail = (u.email || '').toLowerCase().trim();
+        const uMob = (u.mobile || '').trim();
+        const uDigits = uMob.replace(/\D/g, '');
+        const uLast10 = uDigits.length >= 10 ? uDigits.slice(-10) : uDigits;
+        const matchEmail = uEmail !== '' && uEmail === idenLower;
+        const matchMobile = (uMob !== '' && uMob === idenTrim) || (last10 !== '' && uLast10 !== '' && last10 === uLast10);
+        return matchEmail || matchMobile;
+      };
+
+      let user = dbData.users.find(u => checkMatch(u) && u.role === role);
       if (!user) {
-        user = dbData.users.find(u => 
-          ((u.email || '').toLowerCase() === idenLower && idenLower !== '') || 
-          ((u.mobile || '').trim() === idenTrim && idenTrim !== '')
-        );
+        user = dbData.users.find(u => checkMatch(u));
       }
+
       if (!user) {
         console.log("User not found in local browser storage. Auto-provisioning on new device:", identifier, role);
         const userId = `${role}_` + Math.floor(Math.random() * 10000000);
@@ -2099,9 +2105,25 @@ class AegisAppController {
       let linkedPatient = null;
       let linkedPatientSettings = null;
       
-      if (role === 'caregiver' && user.primaryDoctorId) {
-        const linkedId = user.primaryDoctorId;
-        const p = dbData.users.find(u => (u.email === linkedId || u.mobile === linkedId) && u.role === 'patient');
+      const effectiveRole = user.role || role;
+      if (effectiveRole === 'caregiver') {
+        let p = null;
+        if (user.primaryDoctorId) {
+          const linkedId = String(user.primaryDoctorId).trim().toLowerCase();
+          const cleanLinkedDigits = linkedId.replace(/\D/g, '');
+          const linkedLast10 = cleanLinkedDigits.length >= 10 ? cleanLinkedDigits.slice(-10) : cleanLinkedDigits;
+          p = dbData.users.find(u => {
+            if (u.role !== 'patient') return false;
+            const uEmail = (u.email || '').toLowerCase().trim();
+            const uMob = (u.mobile || '').trim();
+            const uDigits = uMob.replace(/\D/g, '');
+            const uLast10 = uDigits.length >= 10 ? uDigits.slice(-10) : uDigits;
+            return (uEmail !== '' && uEmail === linkedId) || (uMob !== '' && uMob === linkedId) || (linkedLast10 !== '' && uLast10 !== '' && linkedLast10 === uLast10);
+          });
+        }
+        if (!p) {
+          p = dbData.users.find(u => u.role === 'patient');
+        }
         if (p) {
           linkedPatient = { ...p };
           delete linkedPatient.passwordHash;
@@ -2458,14 +2480,41 @@ class AegisAppController {
     
     if (path === '/api/auth/login') {
       const { identifier, password, role } = data;
+      const idenTrim = (identifier || '').trim();
+      const idenLower = idenTrim.toLowerCase();
+      const idenDigits = idenTrim.replace(/\D/g, '');
+      const last10 = idenDigits.length >= 10 ? idenDigits.slice(-10) : idenDigits;
+
       let querySnapshot = await db.collection('users')
         .where('role', '==', role)
-        .where('email', '==', identifier)
+        .where('email', '==', idenLower)
         .get();
       if (querySnapshot.empty) {
         querySnapshot = await db.collection('users')
           .where('role', '==', role)
-          .where('mobile', '==', identifier)
+          .where('mobile', '==', idenTrim)
+          .get();
+      }
+      if (querySnapshot.empty && last10) {
+        querySnapshot = await db.collection('users')
+          .where('role', '==', role)
+          .where('mobile', '==', last10)
+          .get();
+      }
+      // Cross-role fallback if role tab was selected differently
+      if (querySnapshot.empty) {
+        querySnapshot = await db.collection('users')
+          .where('email', '==', idenLower)
+          .get();
+      }
+      if (querySnapshot.empty) {
+        querySnapshot = await db.collection('users')
+          .where('mobile', '==', idenTrim)
+          .get();
+      }
+      if (querySnapshot.empty && last10) {
+        querySnapshot = await db.collection('users')
+          .where('mobile', '==', last10)
           .get();
       }
       if (querySnapshot.empty) {
@@ -2487,19 +2536,29 @@ class AegisAppController {
       let linkedPatient = null;
       let linkedPatientSettings = null;
       
-      if (role === 'caregiver' && userData.primaryDoctorId) {
-        const linkedId = userData.primaryDoctorId;
-        let pSnapshot = await db.collection('users')
-          .where('role', '==', 'patient')
-          .where('email', '==', linkedId)
-          .get();
-        if (pSnapshot.empty) {
+      const effectiveRole = userData.role || role;
+      if (effectiveRole === 'caregiver') {
+        let pSnapshot = null;
+        if (userData.primaryDoctorId) {
+          const linkedId = userData.primaryDoctorId;
           pSnapshot = await db.collection('users')
             .where('role', '==', 'patient')
-            .where('mobile', '==', linkedId)
+            .where('email', '==', linkedId)
+            .get();
+          if (pSnapshot.empty) {
+            pSnapshot = await db.collection('users')
+              .where('role', '==', 'patient')
+              .where('mobile', '==', linkedId)
+              .get();
+          }
+        }
+        if (!pSnapshot || pSnapshot.empty) {
+          pSnapshot = await db.collection('users')
+            .where('role', '==', 'patient')
+            .limit(1)
             .get();
         }
-        if (!pSnapshot.empty) {
+        if (pSnapshot && !pSnapshot.empty) {
           const pDoc = pSnapshot.docs[0];
           linkedPatient = pDoc.data();
           const pId = linkedPatient.id;
@@ -3579,8 +3638,18 @@ class AegisAppController {
           // Trigger celebratory tone
           this.playSuccessConfetti();
           
-          // Switch view based on role
-          if (role === 'patient') {
+          const actualRole = stateStore.data.activePatient?.role || result.user?.role || role || 'patient';
+          console.log("Routing view based on actualRole:", actualRole);
+          
+          // Sync role tabs in login UI
+          document.querySelectorAll('.role-tab').forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-role') === actualRole);
+          });
+          const loginRoleInput = document.getElementById('login-role');
+          if (loginRoleInput) loginRoleInput.value = actualRole;
+
+          // Switch view based on actualRole
+          if (actualRole === 'patient') {
             this.activeTab = 'tab-dashboard'; // Default Daily Schedule Dashboard on login
             this.checkAuthSession();
             this.loadSettings();
@@ -3589,15 +3658,15 @@ class AegisAppController {
             this.renderAnalytics();
             this.renderAppointments();
             this.calculateStreak();
-          } else if (role === 'caregiver') {
+          } else if (actualRole === 'caregiver') {
             this.activeTab = 'tab-caregiver-dashboard';
             this.checkAuthSession();
             this.loadSettings();
             this.renderCaregiverDashboard();
-          } else if (role === 'doctor') {
+          } else if (actualRole === 'doctor') {
             this.activeTab = 'tab-doctor-dashboard';
             this.checkAuthSession();
-          } else if (role === 'admin') {
+          } else if (actualRole === 'admin') {
             this.activeTab = 'tab-admin-dashboard';
             this.checkAuthSession();
           }
@@ -3683,9 +3752,18 @@ class AegisAppController {
             
             this.playSuccessConfetti();
             
-            console.log("Routing view based on role:", role);
-            // Switch view based on role
-            if (role === 'patient') {
+            const actualRole = stateStore.data.activePatient?.role || apiResult.user?.role || role || 'patient';
+            console.log("Routing view based on actualRole (Google):", actualRole);
+
+            // Sync role tabs in login UI
+            document.querySelectorAll('.role-tab').forEach(b => {
+              b.classList.toggle('active', b.getAttribute('data-role') === actualRole);
+            });
+            const loginRoleInput = document.getElementById('login-role');
+            if (loginRoleInput) loginRoleInput.value = actualRole;
+
+            // Switch view based on actualRole
+            if (actualRole === 'patient') {
               this.activeTab = 'tab-dashboard';
               this.checkAuthSession();
               this.loadSettings();
@@ -3694,15 +3772,15 @@ class AegisAppController {
               this.renderAnalytics();
               this.renderAppointments();
               this.calculateStreak();
-            } else if (role === 'caregiver') {
+            } else if (actualRole === 'caregiver') {
               this.activeTab = 'tab-caregiver-dashboard';
               this.checkAuthSession();
               this.loadSettings();
               this.renderCaregiverDashboard();
-            } else if (role === 'doctor') {
+            } else if (actualRole === 'doctor') {
               this.activeTab = 'tab-doctor-dashboard';
               this.checkAuthSession();
-            } else if (role === 'admin') {
+            } else if (actualRole === 'admin') {
               this.activeTab = 'tab-admin-dashboard';
               this.checkAuthSession();
             }

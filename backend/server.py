@@ -262,10 +262,33 @@ def get_user_login_payload(cursor, user):
     linked_patient = None
     linked_patient_settings = None
 
-    if role == 'caregiver' and user.get('primary_doctor_id'):
-        linked_identifier = str(user['primary_doctor_id']).strip().lower()
-        cursor.execute('SELECT * FROM users WHERE (LOWER(email) = ? OR mobile = ?) AND role = \'patient\'', (linked_identifier, linked_identifier))
-        p_row = cursor.fetchone()
+    if role == 'caregiver':
+        p_row = None
+        if user.get('primary_doctor_id'):
+            linked_identifier = str(user['primary_doctor_id']).strip().lower()
+            clean_digits = ''.join(c for c in linked_identifier if c.isdigit())
+            last10 = clean_digits[-10:] if len(clean_digits) >= 10 else clean_digits
+            cursor.execute('''
+                SELECT * FROM users 
+                WHERE role = 'patient' AND (
+                    LOWER(email) = ? OR mobile = ? OR (? != '' AND mobile LIKE ?)
+                ) LIMIT 1
+            ''', (linked_identifier, linked_identifier, last10, f"%{last10}%"))
+            p_row = cursor.fetchone()
+
+        if not p_row:
+            cursor.execute('''
+                SELECT u.* FROM users u
+                JOIN caregiver_patient cp ON u.id = cp.patient_id
+                WHERE cp.caregiver_id = ? AND cp.status = 'active' AND u.role = 'patient'
+                LIMIT 1
+            ''', (user_id,))
+            p_row = cursor.fetchone()
+
+        if not p_row:
+            cursor.execute("SELECT * FROM users WHERE role = 'patient' LIMIT 1")
+            p_row = cursor.fetchone()
+
         if p_row:
             p_dict = dict(p_row)
             p_dict.pop('password_hash', None)
@@ -789,12 +812,23 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                     self.send_json_response({"error": "Missing credentials"}, 400)
                     return
                 
-                print(f"[LOGIN DEBUG] Attempting login: identifier={identifier}, role={role}")
-                cursor.execute('SELECT * FROM users WHERE (LOWER(email) = LOWER(?) OR mobile = ?) AND role = ?', (identifier, identifier, role))
+                clean_digits = ''.join(c for c in identifier if c.isdigit())
+                last10 = clean_digits[-10:] if len(clean_digits) >= 10 else clean_digits
+
+                print(f"[LOGIN DEBUG] Attempting login: identifier={identifier}, role={role}, last10={last10}")
+                cursor.execute('''
+                    SELECT * FROM users 
+                    WHERE (LOWER(email) = LOWER(?) OR mobile = ? OR (? != '' AND mobile LIKE ?)) AND role = ?
+                    LIMIT 1
+                ''', (identifier, identifier, last10, f"%{last10}%", role))
                 row = cursor.fetchone()
                 if not row:
                     # Fallback lookup without role filter
-                    cursor.execute('SELECT * FROM users WHERE LOWER(email) = LOWER(?) OR mobile = ?', (identifier, identifier))
+                    cursor.execute('''
+                        SELECT * FROM users 
+                        WHERE LOWER(email) = LOWER(?) OR mobile = ? OR (? != '' AND mobile LIKE ?)
+                        LIMIT 1
+                    ''', (identifier, identifier, last10, f"%{last10}%"))
                     row = cursor.fetchone()
                 
                 if not row:
